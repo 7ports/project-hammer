@@ -15,7 +15,7 @@ export function useAISStream(): AISStreamResult {
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const url = `${config.apiUrl}/api/ais/stream`;
+    const url = `${config.apiUrl}/api/ais`;
     const es = new EventSource(url);
 
     const resetOfflineTimer = () => {
