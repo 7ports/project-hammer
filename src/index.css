@@ -1,23 +1,105 @@
+/* ============================================================
+   Design Tokens — Dark Maritime Theme
+   ============================================================ */
 :root {
-  --ocean-deep: #0a1628;
-  --accent-cyan: #00e5ff;
-  --text-primary: #e0e6ed;
+  /* Ocean palette */
+  --ocean-deep:    #060d1a;
+  --ocean-surface: #0a1628;
+  --ocean-mid:     #0d2040;
+  --ocean-light:   #1a3a5c;
 
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--text-primary);
-  background: var(--ocean-deep);
-  -webkit-font-smoothing: antialiased;
+  /* Glass morphism */
+  --glass-bg:      rgba(10, 22, 40, 0.72);
+  --glass-border:  rgba(255, 255, 255, 0.08);
+  --glass-blur:    blur(12px);
+
+  /* Accent */
+  --accent-cyan:     #00e5ff;
+  --accent-cyan-dim: rgba(0, 229, 255, 0.25);
+
+  /* Vessel status */
+  --status-moving:  #4caf50;
+  --status-docked:  #ff9800;
+  --status-offline: #f44336;
+
+  /* Text */
+  --text-primary:   #e0e7ef;
+  --text-secondary: #8ea9c1;
+  --text-muted:     #4a6a8a;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type scale (fluid) */
+  --text-xs:   clamp(0.625rem, 1.5vw, 0.75rem);
+  --text-sm:   clamp(0.75rem,  1.8vw, 0.875rem);
+  --text-base: clamp(0.875rem, 2vw,   1rem);
+  --text-lg:   clamp(1rem,     2.5vw, 1.25rem);
+  --text-xl:   clamp(1.25rem,  3vw,   1.5rem);
+  --text-2xl:  clamp(1.5rem,   4vw,   2rem);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(0, 229, 255, 0.2);
+
+  /* Z-index scale */
+  --z-map:     0;
+  --z-overlay: 10;
+  --z-panel:   20;
+  --z-modal:   30;
+  --z-toast:   40;
 }
 
-* {
+/* ============================================================
+   Reset + Base
+   ============================================================ */
+*, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--ocean-deep);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  min-height: 100dvh;
+/* ============================================================
+   Reduced Motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,113 @@
+/* ============================================================
+   AppShell — full-viewport layout container
+   Mobile-first: map fills entire screen.
+   Desktop (≥1024px): map + 360px right panel grid.
+   ============================================================ */
+
+.app-shell {
+  width: 100%;
+  height: 100dvh; /* dvh: respects mobile browser chrome */
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
+  position: relative;
+  overflow: hidden;
+  background: var(--ocean-deep);
+
+  /* Safe area insets — notched devices (iPhone X+) */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Desktop: add 360px right panel column */
+@media (min-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 1fr 360px;
+  }
+
+  .app-shell__map {
+    grid-column: 1;
+  }
+
+  .app-shell__panel {
+    grid-column: 2;
+    background: var(--glass-bg);
+    border-left: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    overflow-y: auto;
+    z-index: var(--z-panel);
+  }
+}
+
+/* Map slot — fills its grid cell */
+.app-shell__map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Overlay slot — top-right corner, above the map */
+.app-shell__overlay {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+
+  /* Nudge inside safe area on notched devices */
+  top: calc(var(--space-3) + env(safe-area-inset-top));
+  right: calc(var(--space-3) + env(safe-area-inset-right));
+}
+
+/* ============================================================
+   ConnectionIndicator
+   Glassmorphism pill — sits inside .app-shell__overlay
+   ============================================================ */
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-sm);
+
+  /* Minimum touch target height — not interactive, but keeps
+     the pill visually comfortable beside any nearby buttons */
+  min-height: 28px;
+}
+
+.connection-indicator__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  flex-shrink: 0;
+  /* background set inline via STATUS_COLORS token reference */
+}
+
+.connection-indicator__label {
+  text-transform: capitalize;
+  letter-spacing: 0.03em;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+/* Disable dot animation when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .connection-indicator__dot {
+    animation: none !important;
+  }
+}
