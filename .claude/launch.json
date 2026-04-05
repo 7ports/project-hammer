@@ -1,0 +1,6 @@
+{
+  "preview": {
+    "port": 5173,
+    "startCommand": "npm run dev"
+  }
+}
