@@ -57,11 +57,14 @@ interface RouteRowProps {
 }
 
 function RouteRow({ routeId, label }: RouteRowProps) {
-  const { loading, error, upcomingDepartures } = useSchedule();
+  const { loading, error, upcomingDepartures, activeSeason } = useSchedule();
   const { routes } = useServiceStatus();
   const routeStatus = routes.find(r => r.routeId === routeId);
   const state = routeStatus?.status ?? 'unknown';
-  const next4 = upcomingDepartures(routeId, 'outbound', 4);
+
+  // Only show departures for routes that exist in the active season
+  const routeInSeason = activeSeason?.routes.some(r => r.routeId === routeId) ?? false;
+  const next4 = routeInSeason ? upcomingDepartures(routeId, 'outbound', 4) : [];
   const firstTime = next4[0]?.time ?? null;
   const countdown = useCountdown(firstTime);
 
@@ -85,6 +88,24 @@ function RouteRow({ routeId, label }: RouteRowProps) {
           <span className="schedule-route__name">{label}</span>
         </div>
         <p className="schedule-route__notice schedule-route__notice--error">Unable to load schedule</p>
+      </div>
+    );
+  }
+
+  // Route not operating in the active season (e.g. Centre/Hanlans in winter)
+  if (!routeInSeason && state !== 'disrupted') {
+    return (
+      <div className="schedule-route">
+        <div className="schedule-route__header">
+          <span className="schedule-route__name">{label}</span>
+          <span
+            className={`schedule-route__status ${STATUS_CSS_CLASS['seasonal-closure']}`}
+            aria-label={`${label}: ${STATUS_LABELS['seasonal-closure']}`}
+          >
+            {STATUS_LABELS['seasonal-closure']}
+          </span>
+        </div>
+        <p className="schedule-route__notice">Not operating this season</p>
       </div>
     );
   }
@@ -123,7 +144,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
           className={`schedule-route__notice${state === 'disrupted' ? ' schedule-route__notice--disrupted' : ''}`}
           role={state === 'disrupted' ? 'alert' : undefined}
         >
-          {routeStatus?.message ?? (state === 'seasonal-closure' ? 'Service resumes April 15' : 'Status unavailable')}
+          {routeStatus?.message ?? (state === 'seasonal-closure' ? 'Not operating this season' : 'Status unavailable')}
         </p>
       )}
     </div>
@@ -131,9 +152,21 @@ function RouteRow({ routeId, label }: RouteRowProps) {
 }
 
 export function ScheduleView() {
+  const { activeSeason, loading } = useSchedule();
+
+  const seasonBadge = !loading && activeSeason ? (
+    <div className="schedule-view__season">
+      <span className="schedule-view__season-name">{activeSeason.name} Schedule</span>
+      {activeSeason.note && (
+        <p className="schedule-view__season-note">{activeSeason.note}</p>
+      )}
+    </div>
+  ) : null;
+
   return (
     <section className="schedule-view" aria-label="Ferry departure schedule">
       <h3 className="schedule-view__title">Departures</h3>
+      {seasonBadge}
       {ROUTE_DISPLAY.map(({ id, label }) => (
         <RouteRow key={id} routeId={id} label={label} />
       ))}

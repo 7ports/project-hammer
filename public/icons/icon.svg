@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#060d1a"/>
+  <!-- Ferry hull -->
+  <path d="M80 320 L432 320 L400 370 L112 370 Z" fill="white"/>
+  <!-- Ferry deck -->
+  <rect x="140" y="240" width="232" height="80" fill="white"/>
+  <!-- Cabin -->
+  <rect x="180" y="180" width="152" height="60" fill="white"/>
+  <!-- Smokestack -->
+  <rect x="230" y="140" width="20" height="40" fill="white"/>
+  <rect x="270" y="150" width="16" height="30" fill="white"/>
+  <!-- Wave lines below hull -->
+  <path d="M60 385 Q100 378 140 385 Q180 392 220 385 Q260 378 300 385 Q340 392 380 385 Q420 378 460 385"
+        stroke="#22d3ee" stroke-width="3" fill="none" opacity="0.6"/>
+</svg>

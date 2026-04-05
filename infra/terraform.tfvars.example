@@ -1,0 +1,8 @@
+# infra/terraform.tfvars.example
+#
+# Copy this file to terraform.tfvars and fill in values.
+# terraform.tfvars is gitignored — do NOT commit it.
+
+domain_name = "ferries.yyz.live"
+zone_name   = "yyz.live"
+environment = "production"

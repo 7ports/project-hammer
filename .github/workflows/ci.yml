@@ -1,0 +1,88 @@
+# .github/workflows/ci.yml
+#
+# Pull-request checks — all three jobs must pass before merge.
+# No secrets required for this workflow.
+#
+# Jobs run in parallel:
+#   frontend-checks  — TypeScript + ESLint
+#   frontend-test    — Vitest unit tests
+#   backend-checks   — TypeScript (server/)
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Frontend — static analysis
+  # ---------------------------------------------------------------------------
+  frontend-checks:
+    name: Frontend — typecheck + lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript — typecheck
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # Frontend — unit tests
+  # ---------------------------------------------------------------------------
+  frontend-test:
+    name: Frontend — tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Vitest
+        # --run exits after a single pass (no watch mode in CI)
+        run: npm test -- --run
+
+  # ---------------------------------------------------------------------------
+  # Backend — static analysis
+  # ---------------------------------------------------------------------------
+  backend-checks:
+    name: Backend — typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          # Cache keyed to server/package-lock.json so frontend and backend
+          # caches do not collide.
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: TypeScript — typecheck
+        working-directory: server
+        run: npm run typecheck

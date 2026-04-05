@@ -9,10 +9,12 @@ import { lerpPosition } from '../lib/interpolation';
 const OFFLINE_THRESHOLD_MS = 60_000; // 60 seconds
 const DOCKED_SPEED_KNOTS = 0.5;
 const AIS_UPDATE_INTERVAL_MS = 10_000; // ~10 s between AIS pings
+const MAX_HISTORY_LENGTH = 8;
 
 export interface VesselPositionsResult {
   vessels: Vessel[];
   connectionStatus: ConnectionStatus;
+  positionHistory: Map<number, VesselPosition[]>;
 }
 
 export function useVesselPositions(): VesselPositionsResult {
@@ -24,8 +26,11 @@ export function useVesselPositions(): VesselPositionsResult {
   const targetRef = useRef<Map<number, VesselPosition>>(new Map());
   // animStartRef: rAF timestamp when the current lerp segment began
   const animStartRef = useRef<Map<number, number>>(new Map());
+  // positionHistoryRef: circular buffer of recent interpolated positions per vessel
+  const positionHistoryRef = useRef<Map<number, VesselPosition[]>>(new Map());
 
   const [interpolated, setInterpolated] = useState<Vessel[]>([]);
+  const [positionHistory, setPositionHistory] = useState<Map<number, VesselPosition[]>>(new Map());
 
   useAnimationFrame((timestamp) => {
     const now = Date.now();
@@ -61,6 +66,13 @@ export function useVesselPositions(): VesselPositionsResult {
             ? 'docked'
             : 'moving';
 
+      // Accumulate position history only for moving vessels
+      if (status === 'moving') {
+        const history = positionHistoryRef.current.get(mmsi) ?? [];
+        const updated = [...history, interpolatedPos].slice(-MAX_HISTORY_LENGTH);
+        positionHistoryRef.current.set(mmsi, updated);
+      }
+
       result.push({
         ...interpolatedPos,
         status,
@@ -69,7 +81,9 @@ export function useVesselPositions(): VesselPositionsResult {
     });
 
     setInterpolated(result);
+    // Snapshot the history ref into state so consumers re-render with new data
+    setPositionHistory(new Map(positionHistoryRef.current));
   });
 
-  return { vessels: interpolated, connectionStatus };
+  return { vessels: interpolated, connectionStatus, positionHistory };
 }

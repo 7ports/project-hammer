@@ -4,6 +4,7 @@ import { useServiceStatus } from '../../hooks/useServiceStatus';
 import { VesselCard } from './VesselCard';
 import { ScheduleView } from './ScheduleView';
 import { TicketCard } from './TicketCard';
+import { WeatherStrip } from './WeatherStrip';
 import './PanelShell.css';
 
 // ---------------------------------------------------------------------------
@@ -19,15 +20,41 @@ export interface PanelShellProps {
 // Disruption banner
 // ---------------------------------------------------------------------------
 
+const BANNER_TRUNCATE_THRESHOLD = 120;
+
 interface DisruptionBannerProps {
   message: string;
   onDismiss: () => void;
 }
 
 function DisruptionBanner({ message, onDismiss }: DisruptionBannerProps) {
+  // Strip any residual HTML tags that may have come through from ferry.json comments
+  const cleanMessage = message.replace(/<[^>]*>/g, '');
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const canTruncate = cleanMessage.length > BANNER_TRUNCATE_THRESHOLD;
+
   return (
     <div className="disruption-banner" role="alert" aria-live="polite">
-      <span className="disruption-banner__message">{message}</span>
+      <div className="disruption-banner__body">
+        <span
+          className={
+            canTruncate && !isExpanded
+              ? 'disruption-banner__message disruption-banner__message--clamped'
+              : 'disruption-banner__message'
+          }
+        >
+          {cleanMessage}
+        </span>
+        {canTruncate && (
+          <button
+            className="disruption-banner__toggle"
+            type="button"
+            onClick={() => setIsExpanded(prev => !prev)}
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        )}
+      </div>
       <button
         className="disruption-banner__dismiss"
         type="button"
@@ -212,6 +239,10 @@ export function PanelShell({ vessel }: PanelShellProps) {
           onDismiss={handleDismissBanner}
         />
       )}
+
+      <div className="panel-shell__section panel-shell__section--weather">
+        <WeatherStrip />
+      </div>
 
       <div className="panel-shell__section">
         {vessel !== null ? (

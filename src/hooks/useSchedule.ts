@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { ScheduleData, Departure, RouteId, DayOfWeek } from '../types/schedule';
+import type { ScheduleData, ScheduleSeason, Departure, RouteId, DayOfWeek } from '../types/schedule';
 
 export interface UseScheduleResult {
   schedule: ScheduleData | null;
+  activeSeason: ScheduleSeason | null;
+  routes: ScheduleSeason['routes'];
   loading: boolean;
   error: string | null;
   upcomingDepartures: (routeId: RouteId, direction: 'outbound' | 'inbound', count: number) => Departure[];
@@ -10,15 +12,37 @@ export interface UseScheduleResult {
 
 const DAY_NAMES: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
+/**
+ * Find the active season for a given date (YYYY-MM-DD string).
+ * Looks for the season where effectiveFrom <= today <= effectiveUntil.
+ * Falls back to the most recent past season if none match today.
+ */
+function findActiveSeason(schedule: ScheduleData, today: string): ScheduleSeason | null {
+  if (schedule.seasons.length === 0) return null;
+
+  // First: exact range match
+  const exact = schedule.seasons.find(
+    s => today >= s.effectiveFrom && today <= s.effectiveUntil,
+  );
+  if (exact) return exact;
+
+  // Fallback: most recent season whose effectiveFrom is in the past
+  const past = schedule.seasons
+    .filter(s => s.effectiveFrom <= today)
+    .sort((a, b) => (a.effectiveFrom > b.effectiveFrom ? -1 : 1));
+
+  return past[0] ?? schedule.seasons[0];
+}
+
 function getUpcoming(
-  schedule: ScheduleData | null,
+  activeSeason: ScheduleSeason | null,
   routeId: RouteId,
   direction: 'outbound' | 'inbound',
   count: number,
 ): Departure[] {
-  if (!schedule) return [];
+  if (!activeSeason) return [];
 
-  const route = schedule.routes.find(r => r.routeId === routeId);
+  const route = activeSeason.routes.find(r => r.routeId === routeId);
   if (!route) return [];
 
   const now = new Date();
@@ -26,7 +50,11 @@ function getUpcoming(
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const todaysDepartures = route.departures
-    .filter(d => d.direction === direction && d.days.includes(todayDay))
+    .filter(d =>
+      d.direction === direction &&
+      d.days.includes(todayDay) &&
+      !d.peakOnly,
+    )
     .map(d => {
       const [h, m] = d.time.split(':').map(Number);
       return { departure: d, minutes: h * 60 + m };
@@ -68,11 +96,22 @@ export function useSchedule(): UseScheduleResult {
     return () => { cancelled = true; };
   }, []);
 
-  const upcomingDepartures = useMemo(
-    () => (routeId: RouteId, direction: 'outbound' | 'inbound', count: number) =>
-      getUpcoming(schedule, routeId, direction, count),
-    [schedule],
+  const activeSeason = useMemo((): ScheduleSeason | null => {
+    if (!schedule) return null;
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    return findActiveSeason(schedule, today);
+  }, [schedule]);
+
+  const routes = useMemo(
+    () => activeSeason?.routes ?? [],
+    [activeSeason],
   );
 
-  return { schedule, loading, error, upcomingDepartures };
+  const upcomingDepartures = useMemo(
+    () => (routeId: RouteId, direction: 'outbound' | 'inbound', count: number) =>
+      getUpcoming(activeSeason, routeId, direction, count),
+    [activeSeason],
+  );
+
+  return { schedule, activeSeason, routes, loading, error, upcomingDepartures };
 }

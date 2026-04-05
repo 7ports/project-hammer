@@ -1,0 +1,158 @@
+/* ============================================================
+   WeatherStrip — compact single-row weather display
+   Fits in 360px panel, dark maritime glassmorphism theme
+   ============================================================ */
+
+.weather-strip {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  min-height: 44px;
+}
+
+/* Icon */
+.weather-strip__icon {
+  font-size: var(--text-lg);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Condition label */
+.weather-strip__condition {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Temperature */
+.weather-strip__temp {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* Feels like */
+.weather-strip__feels-like {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Visual divider */
+.weather-strip__divider {
+  display: block;
+  width: 1px;
+  height: 16px;
+  background: var(--glass-border);
+  flex-shrink: 0;
+}
+
+/* Wind group */
+.weather-strip__wind {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.weather-strip__wind-arrow {
+  font-size: var(--text-sm);
+  color: var(--accent-cyan);
+  line-height: 1;
+}
+
+.weather-strip__wind-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.weather-strip__gust {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Precipitation warning badge */
+.weather-strip__precip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid rgba(255, 152, 0, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Loading skeleton
+   ============================================================ */
+
+@keyframes weather-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+.weather-strip--loading {
+  gap: var(--space-3);
+}
+
+.weather-strip__skeleton {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--ocean-mid);
+  animation: weather-pulse 1.5s ease-in-out infinite;
+}
+
+.weather-strip__skeleton--wide {
+  width: 120px;
+}
+
+.weather-strip__skeleton--narrow {
+  width: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-strip__skeleton {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ============================================================
+   Error state
+   ============================================================ */
+
+.weather-strip--error {
+  justify-content: center;
+}
+
+.weather-strip__error-text {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-style: italic;
+}

@@ -209,6 +209,11 @@
   border-bottom: none;
 }
 
+/* Weather strip section: strip has its own internal padding */
+.panel-shell__section--weather {
+  padding: var(--space-3) var(--space-4);
+}
+
 /* ------------------------------------------------------------
    Vessel placeholder — shown when no vessel is selected
    ------------------------------------------------------------ */
@@ -240,9 +245,57 @@
   line-height: 1.5;
 }
 
-.disruption-banner__message {
+.disruption-banner__body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.disruption-banner__message {
   /* Allow the message to wrap naturally */
+}
+
+.disruption-banner__message--clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.disruption-banner__toggle {
+  /* Reset */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  /* Inline text button */
+  color: var(--accent-cyan);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.disruption-banner__toggle:hover {
+  color: var(--text-primary);
+}
+
+.disruption-banner__toggle:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disruption-banner__toggle {
+    transition: none;
+  }
 }
 
 .disruption-banner__dismiss {
