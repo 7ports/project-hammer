@@ -1,0 +1,32 @@
+# fly.toml — Fly.io configuration for project-hammer-api
+#
+# SECRETS REQUIRED — set these before first deploy:
+#   flyctl secrets set AISSTREAM_API_KEY=<your-key>
+#   flyctl secrets set CORS_ORIGIN=https://<your-cloudfront-or-custom-domain>
+#
+# Never hardcode secrets in this file.
+
+app            = "project-hammer-api"
+primary_region = "yyz"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port       = 3001
+  force_https         = true
+  auto_stop_machines  = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size   = "shared-cpu-1x"
+  memory = "256mb"
+
+[checks]
+  [checks.health]
+    port     = 3001
+    type     = "http"
+    path     = "/api/health"
+    interval = "30s"
+    timeout  = "5s"
