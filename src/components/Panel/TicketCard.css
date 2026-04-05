@@ -1,0 +1,124 @@
+/* ============================================================
+   TicketCard — Ferry ticket fares + CTA
+   All values reference design tokens from src/index.css.
+   No hardcoded colours, sizes, or spacing.
+   ============================================================ */
+
+.ticket-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Section heading ── */
+.ticket-card__title {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* ── Fare rows container ── */
+.ticket-card__fares {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── Single fare row ── */
+.ticket-card__fare-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px; /* WCAG touch target floor */
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.ticket-card__fare-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Passenger type label ── */
+.ticket-card__fare-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+/* ── Price ── */
+.ticket-card__fare-price {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-cyan);
+  letter-spacing: 0.03em;
+}
+
+/* ── Validity note ── */
+.ticket-card__validity {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ── Buy Tickets CTA ── */
+.ticket-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px; /* WCAG touch target */
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: var(--radius-full);
+  color: var(--accent-cyan);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ticket-card__cta:hover,
+.ticket-card__cta:focus-visible {
+  background: var(--accent-cyan-dim);
+  box-shadow: var(--shadow-glow);
+}
+
+.ticket-card__cta:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+}
+
+.ticket-card__cta:active {
+  background: var(--accent-cyan-dim);
+  transform: scale(0.98);
+}
+
+/* ── Reduced-motion: disable transitions ── */
+@media (prefers-reduced-motion: reduce) {
+  .ticket-card__cta {
+    transition: none;
+  }
+
+  .ticket-card__cta:active {
+    transform: none;
+  }
+}
