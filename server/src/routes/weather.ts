@@ -205,6 +205,25 @@ function parseObservations(props: GeoMetProperties): Record<string, number | nul
     }
   }
 
+  // Real-world SWOB/AWOS field name aliases (actual GeoMet API uses long names)
+  // Only fill in if the short-name key was not already populated above.
+  const realFieldAliases: Array<[string, string]> = [
+    ['avg_wnd_spd_10m_pst2mts', 'wind_spd'],
+    ['avg_wnd_spd_10m_pst10mts', 'wind_spd'],
+    ['avg_wnd_dir_10m_pst10mts', 'wind_dir'],
+    ['max_wnd_gst_spd_10m_pst10mts', 'max_wind_spd'],
+    ['prsnt_wx_1', 'present_weather'],
+    ['avg_vis_pst10mts', 'visibility'],
+  ];
+  for (const [realKey, shortKey] of realFieldAliases) {
+    if (result[shortKey] === undefined) {
+      const v = props[realKey];
+      if (v !== undefined && v !== null) {
+        result[shortKey] = toNum(v);
+      }
+    }
+  }
+
   return result;
 }
 
@@ -267,7 +286,9 @@ function transformGeoMet(raw: unknown): WeatherObservation {
   return {
     stationName: typeof props.station_name === 'string'
       ? props.station_name
-      : 'Billy Bishop Toronto City A',
+      : typeof props['stn_nam-value'] === 'string'
+        ? props['stn_nam-value']
+        : 'Billy Bishop Toronto City A',
     observedAt: typeof props.obs_date_tm === 'string'
       ? props.obs_date_tm
       : typeof props.observation_time === 'string'
