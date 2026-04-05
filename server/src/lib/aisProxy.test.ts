@@ -32,8 +32,10 @@ class MockWs extends EventEmitter {
   readyState = MockWs.OPEN;
   send: Mock = vi.fn();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_url: string) {
     super();
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     mockWsInstance = this;
   }
 }
