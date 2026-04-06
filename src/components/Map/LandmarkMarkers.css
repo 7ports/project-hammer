@@ -1,11 +1,11 @@
 .landmark-marker {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: rgba(6, 13, 26, 0.82);
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(6px);
-  font-size: 12px;
+  font-size: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -19,7 +19,7 @@
 }
 
 .landmark-popup .maplibregl-popup-content {
-  background: rgba(6, 13, 26, 0.95);
+  background: rgba(10, 20, 40, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   padding: 12px 14px;
@@ -30,7 +30,7 @@
 }
 
 .landmark-popup .maplibregl-popup-tip {
-  border-top-color: rgba(6, 13, 26, 0.95);
+  border-top-color: rgba(10, 20, 40, 0.97);
 }
 
 .landmark-popup__title {
@@ -64,17 +64,17 @@
   color: #fff;
 }
 
-/* Dock marker — distinct from landmark markers with cyan border */
+/* Dock marker — distinct from landmark markers with sky-blue border */
 .dock-marker {
-  width: 20px;
-  height: 20px;
-  font-size: 11px;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
   background: rgba(6, 13, 26, 0.75);
-  border: 1.5px solid rgba(0, 229, 255, 0.3);
+  border: 1.5px solid rgba(0, 180, 216, 0.5);
 }
 
 .dock-marker:hover {
-  border-color: rgba(0, 229, 255, 0.7);
+  border-color: rgba(0, 180, 216, 0.9);
   transform: scale(1.2);
 }
 

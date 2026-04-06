@@ -15,9 +15,9 @@ interface VesselLayerProps {
 }
 
 const STATUS_COLORS: Record<Vessel['status'], string> = {
-  moving: '#4caf50',
-  docked: '#ff9800',
-  offline: '#f44336',
+  moving: '#00e676',
+  docked: '#ffc400',
+  offline: '#ff5252',
 };
 
 const emptyGeoJSON: FeatureCollection<Point> = { type: 'FeatureCollection', features: [] };
@@ -54,7 +54,7 @@ export function VesselLayer({ vesselPositionsRef, selectedMmsi, onVesselClick }:
     type: 'circle',
     source: 'vessels',
     paint: {
-      'circle-radius': 9,
+      'circle-radius': 10,
       'circle-color': ['get', 'color'],
       'circle-opacity': 0.85,
       'circle-blur': 0,
