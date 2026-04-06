@@ -3,13 +3,12 @@ import type { RefObject } from 'react';
 import type { Vessel } from '../types/vessel';
 import type { VesselPosition } from '../types/ais';
 import type { DockLocation } from '../lib/docks';
-import type { RouteId } from '../types/schedule';
 import { useAISStream } from './useAISStream';
 import type { ConnectionStatus } from './useAISStream';
 import { useAnimationFrame } from './useAnimationFrame';
 import { useSchedule } from './useSchedule';
 import { lerpPosition, smoothstep } from '../lib/interpolation';
-import { nearestDock, etaMinutesToDock } from '../lib/docks';
+import { nearestDock, etaMinutesToDock, DOCK_LOCATIONS } from '../lib/docks';
 
 const KNOTS_TO_M_PER_S = 0.514444;
 const METERS_PER_DEG_LAT = 111_320;
@@ -38,18 +37,6 @@ const DOCKED_SPEED_KNOTS = 0.5;
 const AIS_UPDATE_INTERVAL_MS = 10_000; // ~10 s between AIS pings
 const MAX_HISTORY_LENGTH = 8;
 const NEXT_DEPARTURE_LOOKAHEAD_MS = 3 * 60 * 60 * 1000; // 3 hours
-
-// Maps dock ID → routes that depart FROM that dock
-const DOCK_OUTBOUND_ROUTES: Record<string, Array<{ routeId: RouteId; direction: 'outbound' | 'inbound' }>> = {
-  'jack-layton': [
-    { routeId: 'jack-layton-wards', direction: 'outbound' },
-    { routeId: 'jack-layton-centre', direction: 'outbound' },
-    { routeId: 'jack-layton-hanlans', direction: 'outbound' },
-  ],
-  'wards-island': [{ routeId: 'jack-layton-wards', direction: 'inbound' }],
-  'centre-island': [{ routeId: 'jack-layton-centre', direction: 'inbound' }],
-  'hanlans-point': [{ routeId: 'jack-layton-hanlans', direction: 'inbound' }],
-};
 
 export interface VesselPositionsResult {
   vessels: Vessel[];
@@ -159,7 +146,7 @@ export function useVesselPositions(): VesselPositionsResult {
       // Next scheduled departure from this dock (when not underway)
       let nextDepartureAt: string | undefined;
       if (status !== 'moving') {
-        const routes = DOCK_OUTBOUND_ROUTES[dock.id] ?? [];
+        const routes = DOCK_LOCATIONS.find(d => d.id === dock.id)?.routes ?? [];
         const nowDate = new Date(now);
         let earliest: Date | undefined;
 

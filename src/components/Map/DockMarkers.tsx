@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Marker, Popup } from 'react-map-gl/maplibre';
 import { DOCK_LOCATIONS } from '../../lib/docks';
+import type { DockLocation } from '../../lib/docks';
 import { VESSEL_NAMES } from '../../lib/constants';
+import { useSchedule } from '../../hooks/useSchedule';
+import type { Departure } from '../../types/schedule';
 import type { Vessel } from '../../types/vessel';
 import './LandmarkMarkers.css';
 
@@ -11,6 +14,7 @@ interface DockMarkersProps {
 
 export function DockMarkers({ vessels }: DockMarkersProps) {
   const [activeDockId, setActiveDockId] = useState<string | null>(null);
+  const { upcomingDepartures } = useSchedule();
 
   const activeDock = DOCK_LOCATIONS.find((d) => d.id === activeDockId) ?? null;
 
@@ -52,9 +56,14 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
           >
             &times;
           </button>
+
           <p className="landmark-popup__title">{activeDock.name}</p>
+          <p className="dock-popup__address">📍 {activeDock.address}</p>
+          <p className="landmark-popup__desc">{activeDock.description}</p>
 
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
+
+          <DockSchedule dock={activeDock} upcomingDepartures={upcomingDepartures} />
         </Popup>
       )}
     </>
@@ -115,5 +124,35 @@ function DockVesselList({ dockId, vessels }: DockVesselListProps) {
         </div>
       )}
     </>
+  );
+}
+
+interface DockScheduleProps {
+  dock: DockLocation;
+  upcomingDepartures: (routeId: DockLocation['routes'][number]['routeId'], direction: 'outbound' | 'inbound', count: number) => Departure[];
+}
+
+function DockSchedule({ dock, upcomingDepartures }: DockScheduleProps) {
+  const nextDepartures = dock.routes
+    .map((route) => {
+      const departures = upcomingDepartures(route.routeId, route.direction, 1);
+      return { label: route.label, time: departures[0]?.time ?? null };
+    })
+    .filter((d): d is { label: string; time: string } => d.time !== null);
+
+  if (nextDepartures.length === 0) return null;
+
+  return (
+    <div className="dock-popup__section">
+      <p className="dock-popup__section-label">Next departures</p>
+      <ul className="dock-popup__vessel-list">
+        {nextDepartures.map((dep) => (
+          <li key={dep.label} className="dock-popup__schedule-item">
+            <span className="dock-popup__route-label">{dep.label}</span>
+            <span className="dock-popup__departure-time">{dep.time}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

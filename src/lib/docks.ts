@@ -1,14 +1,63 @@
+import type { RouteId } from '../types/schedule';
+
+export interface DockRouteEntry {
+  routeId: RouteId;
+  direction: 'outbound' | 'inbound';
+  label: string;
+}
+
 export interface DockLocation {
   id: string;
   name: string;
   coordinates: [number, number]; // [longitude, latitude]
+  description: string;
+  address: string;
+  routes: DockRouteEntry[];
 }
 
 export const DOCK_LOCATIONS: DockLocation[] = [
-  { id: 'jack-layton', name: 'Jack Layton Ferry Terminal', coordinates: [-79.3750, 43.6402] },
-  { id: 'wards-island', name: "Ward's Island", coordinates: [-79.3578, 43.6314] },
-  { id: 'centre-island', name: 'Centre Island', coordinates: [-79.3784, 43.6224] },
-  { id: 'hanlans-point', name: "Hanlan's Point", coordinates: [-79.3890, 43.6279] },
+  {
+    id: 'jack-layton',
+    name: 'Jack Layton Ferry Terminal',
+    coordinates: [-79.3750, 43.6402],
+    description: 'Main mainland terminal at the foot of Bay Street. Ferries depart to all three island destinations year-round.',
+    address: '9 Queens Quay W, Toronto',
+    routes: [
+      { routeId: 'jack-layton-wards',   direction: 'outbound', label: "→ Ward's Island" },
+      { routeId: 'jack-layton-centre',  direction: 'outbound', label: '→ Centre Island' },
+      { routeId: 'jack-layton-hanlans', direction: 'outbound', label: "→ Hanlan's Point" },
+    ],
+  },
+  {
+    id: 'wards-island',
+    name: "Ward's Island",
+    coordinates: [-79.3578, 43.6314],
+    description: "Eastern island terminal serving the residential Ward's Island community. Quiet, tree-lined, and a short walk from the beach.",
+    address: "Ward's Island, Toronto Islands",
+    routes: [
+      { routeId: 'jack-layton-wards', direction: 'inbound', label: '← Jack Layton' },
+    ],
+  },
+  {
+    id: 'centre-island',
+    name: 'Centre Island',
+    coordinates: [-79.3784, 43.6224],
+    description: 'The most popular island destination. Steps from Centreville Amusement Park, picnic grounds, and the lagoon.',
+    address: 'Centre Island, Toronto Islands',
+    routes: [
+      { routeId: 'jack-layton-centre', direction: 'inbound', label: '← Jack Layton' },
+    ],
+  },
+  {
+    id: 'hanlans-point',
+    name: "Hanlan's Point",
+    coordinates: [-79.3890, 43.6279],
+    description: "Western island terminal near Billy Bishop Airport and Hanlan's beach. Gateway to the quieter western islands.",
+    address: "Hanlan's Point, Toronto Islands",
+    routes: [
+      { routeId: 'jack-layton-hanlans', direction: 'inbound', label: '← Jack Layton' },
+    ],
+  },
 ];
 
 const DEG_TO_RAD = Math.PI / 180;
