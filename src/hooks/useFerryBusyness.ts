@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { config } from '../lib/config';
 
 export type BusynessLevel = 'quiet' | 'moderate' | 'busy' | 'very-busy';
 
@@ -7,6 +8,7 @@ export interface BusynessResult {
   label: string;
   description: string;
   indicatorLabel: string;
+  source: 'api' | 'heuristic';
 }
 
 // Per-dock display config (label + descriptions stay dock-specific even though
@@ -57,13 +59,14 @@ const LEVEL_LABELS: Record<BusynessLevel, string> = {
   'very-busy': 'Very Busy',
 };
 
-function buildResult(dockId: string, level: BusynessLevel): BusynessResult {
+function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heuristic'): BusynessResult {
   const cfg = DOCK_CONFIG[dockId] ?? DOCK_CONFIG['jack-layton'];
   return {
     level,
     label: LEVEL_LABELS[level],
     description: cfg.descriptions[level],
     indicatorLabel: cfg.indicatorLabel,
+    source,
   };
 }
 
@@ -85,12 +88,52 @@ function classifyHeuristic(): BusynessLevel {
   return 'moderate';
 }
 
+interface BusynessApiResponse {
+  records: Array<{ timestamp: string; redemptions: number }>;
+  computedLevel: BusynessLevel | null;
+  bucketsLoaded: number;
+}
+
+const REFRESH_MS = 15 * 60 * 1000; // 15 minutes
+
 export function useFerryBusyness(dockId: string): BusynessResult {
-  const [result, setResult] = useState<BusynessResult>(() => buildResult(dockId, classifyHeuristic()));
+  const [result, setResult] = useState<BusynessResult>(() =>
+    buildResult(dockId, classifyHeuristic(), 'heuristic')
+  );
+  const dockIdRef = useRef(dockId);
+  dockIdRef.current = dockId;
 
   useEffect(() => {
-    const timer = setInterval(() => setResult(buildResult(dockId, classifyHeuristic())), 60_000);
-    return () => clearInterval(timer);
+    let cancelled = false;
+
+    async function fetchLevel() {
+      try {
+        const res = await fetch(`${config.apiUrl}/api/ferry-busyness`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json() as BusynessApiResponse;
+        if (cancelled) return;
+
+        const level = data.computedLevel ?? classifyHeuristic();
+        const source: 'api' | 'heuristic' = data.computedLevel != null ? 'api' : 'heuristic';
+        setResult(buildResult(dockIdRef.current, level, source));
+      } catch {
+        if (!cancelled) {
+          setResult(buildResult(dockIdRef.current, classifyHeuristic(), 'heuristic'));
+        }
+      }
+    }
+
+    void fetchLevel();
+    const timer = setInterval(() => void fetchLevel(), REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  // Re-derive when dockId changes (level stays same, labels update)
+  useEffect(() => {
+    setResult((prev) => buildResult(dockId, prev.level, prev.source));
   }, [dockId]);
 
   return result;

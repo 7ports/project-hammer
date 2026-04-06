@@ -9,6 +9,7 @@ interface RidershipRecord {
 interface RidershipData {
   records: RidershipRecord[];
   dataAgeHours: number | null;
+  bucketsLoaded?: number;
 }
 
 export function RidershipChart() {
@@ -44,6 +45,11 @@ export function RidershipChart() {
     ? `Data from ~${Math.round(data.dataAgeHours)}h ago`
     : 'Historical data';
 
+  const bucketsLoaded = data.bucketsLoaded ?? 0;
+  const noteText = bucketsLoaded > 0
+    ? `Calibrated from ${Math.round(bucketsLoaded / 100) / 10}k historical records`
+    : '15-min intervals · Toronto Open Data';
+
   return (
     <div className="ridership-chart">
       <p className="ridership-chart__title">
@@ -76,7 +82,7 @@ export function RidershipChart() {
           );
         })}
       </svg>
-      <p className="ridership-chart__note">15-min intervals · Toronto Open Data</p>
+      <p className="ridership-chart__note">{noteText}</p>
     </div>
   );
 }
