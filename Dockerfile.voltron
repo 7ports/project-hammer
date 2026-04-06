@@ -3,5 +3,8 @@ RUN apt-get update && apt-get install -y git ca-certificates --no-install-recomm
 RUN npm install -g @anthropic-ai/claude-code
 RUN useradd -m -s /bin/bash voltron
 USER voltron
+RUN git config --global user.name "Voltron Agent" && \
+    git config --global user.email "voltron@project-hammer.local" && \
+    git config --global --add safe.directory /workspace
 WORKDIR /workspace
 ENTRYPOINT ["claude"]
