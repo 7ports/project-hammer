@@ -24,7 +24,7 @@ const LANDMARKS: Landmark[] = [
     name: 'Centreville Amusement Park',
     description:
       'A family amusement park open seasonally (May–Sep) on Centre Island. Features rides, a petting zoo, and classic fairground attractions.',
-    coordinates: [-79.3826, 43.6202],
+    coordinates: [-79.3820, 43.6218],
     icon: '🎡',
   },
   {
@@ -40,7 +40,7 @@ const LANDMARKS: Landmark[] = [
     name: "Ward's Island Beach",
     description:
       'A quiet sandy beach on the eastern tip of the island, popular with residents and day-trippers seeking a peaceful escape.',
-    coordinates: [-79.3510, 43.6299],
+    coordinates: [-79.3515, 43.6303],
     icon: '🏖',
   },
   {
@@ -48,7 +48,7 @@ const LANDMARKS: Landmark[] = [
     name: "Hanlan's Point Beach",
     description:
       "Toronto's clothing-optional beach on the western tip of the island, with views of the city skyline and Lake Ontario.",
-    coordinates: [-79.3962, 43.6248],
+    coordinates: [-79.3975, 43.6250],
     icon: '🏖',
   },
   {
@@ -57,7 +57,7 @@ const LANDMARKS: Landmark[] = [
     description:
       'Over 550 acres of parkland, gardens, sports fields, and trails spread across 15 islands — a beloved green escape from the city.',
     coordinates: [-79.3780, 43.6255],
-    icon: '🌿',
+    icon: '🌳',
   },
 ];
 

@@ -1,10 +1,6 @@
 FROM node:20-slim
-RUN apt-get update && apt-get install -y git ca-certificates --no-install-recommends && rm -rf /var/lib/apt/lists/*
 RUN npm install -g @anthropic-ai/claude-code
 RUN useradd -m -s /bin/bash voltron
 USER voltron
-RUN git config --global user.name "Voltron Agent" && \
-    git config --global user.email "voltron@project-hammer.local" && \
-    git config --global --add safe.directory /workspace
 WORKDIR /workspace
 ENTRYPOINT ["claude"]

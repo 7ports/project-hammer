@@ -34,7 +34,7 @@ export function FerryMap({ children }: FerryMapProps) {
           zoom: DEFAULT_ZOOM,
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle={`https://api.maptiler.com/maps/dataviz-dark/style.json?key=${config.maptilerApiKey}`}
+        mapStyle={`https://api.maptiler.com/maps/ocean/style.json?key=${config.maptilerApiKey}`}
         onLoad={handleMapLoad}
         attributionControl={{}}
         minZoom={12}
