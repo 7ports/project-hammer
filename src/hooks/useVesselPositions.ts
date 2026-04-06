@@ -38,7 +38,6 @@ const AIS_UPDATE_INTERVAL_MS = 10_000; // ~10 s between AIS pings
 const MAX_HISTORY_LENGTH = 8;
 const NEXT_DEPARTURE_LOOKAHEAD_MS = 3 * 60 * 60 * 1000; // 3 hours
 
-
 export interface VesselPositionsResult {
   vessels: Vessel[];
   vesselPositionsRef: RefObject<Vessel[]>;
