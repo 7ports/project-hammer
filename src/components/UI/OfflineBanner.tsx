@@ -15,6 +15,7 @@ export function OfflineBanner({ connectionStatus }: OfflineBannerProps) {
 
   useEffect(() => {
     if (!isOffline) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowBanner(false);
       return;
     }

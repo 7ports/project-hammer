@@ -59,7 +59,7 @@ export function AboutPanel({ isOpen, onClose, triggerRef }: AboutPanelProps) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   if (!isOpen) return null;
 

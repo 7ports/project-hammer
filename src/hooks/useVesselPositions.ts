@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { Vessel } from '../types/vessel';
 import type { VesselPosition } from '../types/ais';
 import type { DockLocation } from '../lib/docks';
@@ -40,7 +40,9 @@ export function useVesselPositions(): VesselPositionsResult {
 
   // Keep upcomingDepartures accessible inside the rAF closure without a stale reference
   const upcomingDeparturesRef = useRef(upcomingDepartures);
-  upcomingDeparturesRef.current = upcomingDepartures;
+  useLayoutEffect(() => {
+    upcomingDeparturesRef.current = upcomingDepartures;
+  });
 
   const fromRef = useRef<Map<number, VesselPosition>>(new Map());
   const targetRef = useRef<Map<number, VesselPosition>>(new Map());
