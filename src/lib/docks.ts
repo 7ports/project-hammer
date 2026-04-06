@@ -23,6 +23,22 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * Estimate minutes to reach a dock at current speed.
+ * Returns undefined if SOG is too low to estimate reliably (< 0.5 kn).
+ */
+export function etaMinutesToDock(
+  lat: number,
+  lon: number,
+  dock: DockLocation,
+  sogKnots: number,
+): number | undefined {
+  if (sogKnots < 0.5) return undefined;
+  const distKm = haversineKm(lat, lon, dock.coordinates[1], dock.coordinates[0]);
+  const speedKmh = sogKnots * 1.852;
+  return Math.round((distKm / speedKmh) * 60);
+}
+
 export function nearestDock(lat: number, lon: number): DockLocation {
   let nearest = DOCK_LOCATIONS[0];
   let minDist = haversineKm(lat, lon, nearest.coordinates[1], nearest.coordinates[0]);

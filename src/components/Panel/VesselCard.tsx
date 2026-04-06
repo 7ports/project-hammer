@@ -21,6 +21,15 @@ const STATUS_LABELS: Record<Vessel['status'], string> = {
   offline: 'Offline',
 };
 
+function formatShortTime(iso: string): string {
+  const d = new Date(iso);
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 function headingToCardinal(heading: number): string {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
   return dirs[Math.round(heading / 45) % 8];
@@ -49,10 +58,40 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
     >
       <div className="vessel-card__name">{name}</div>
 
-      <div className="vessel-card__dock-context">
-        {vessel.status === 'docked' && `AT ${vessel.nearestDock.name}`}
-        {vessel.status === 'moving' && `\u2192 ${vessel.nearestDock.name}`}
-        {vessel.status === 'offline' && 'Signal lost'}
+      {/* Route intelligence — status-specific */}
+      <div className="vessel-card__route-info">
+        {vessel.status === 'moving' && (
+          <>
+            <span className="vessel-card__route-primary">
+              {'\u2192'} {vessel.nearestDock.name}
+              {vessel.etaMinutes !== undefined && (
+                <span className="vessel-card__eta"> · ETA ~{vessel.etaMinutes} min</span>
+              )}
+            </span>
+            {vessel.departedFrom && (
+              <span className="vessel-card__route-secondary">
+                Departed {vessel.departedFrom.name}
+              </span>
+            )}
+          </>
+        )}
+        {vessel.status === 'docked' && (
+          <>
+            <span className="vessel-card__route-primary">
+              AT {vessel.nearestDock.name}
+            </span>
+            {vessel.nextDepartureAt && (
+              <span className="vessel-card__route-secondary">
+                Next departure {formatShortTime(vessel.nextDepartureAt)}
+              </span>
+            )}
+          </>
+        )}
+        {vessel.status === 'offline' && (
+          <span className="vessel-card__route-primary vessel-card__route-primary--muted">
+            Signal lost · Last near {vessel.nearestDock.name}
+          </span>
+        )}
       </div>
 
       <div className="vessel-card__status">
