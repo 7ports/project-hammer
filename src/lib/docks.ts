@@ -23,9 +23,9 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     description: 'Main mainland terminal at the foot of Bay Street. Ferries depart to all three island destinations year-round.',
     address: '9 Queens Quay W, Toronto',
     routes: [
-      { routeId: 'jack-layton-wards',   direction: 'outbound', label: "→ Ward's Island" },
-      { routeId: 'jack-layton-centre',  direction: 'outbound', label: '→ Centre Island' },
-      { routeId: 'jack-layton-hanlans', direction: 'outbound', label: "→ Hanlan's Point" },
+      { routeId: 'jack-layton-wards',   direction: 'outbound', label: "\u2192 Ward's Island" },
+      { routeId: 'jack-layton-centre',  direction: 'outbound', label: '\u2192 Centre Island' },
+      { routeId: 'jack-layton-hanlans', direction: 'outbound', label: "\u2192 Hanlan's Point" },
     ],
   },
   {
@@ -35,7 +35,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     description: "Eastern island terminal serving the residential Ward's Island community. Quiet, tree-lined, and a short walk from the beach.",
     address: "Ward's Island, Toronto Islands",
     routes: [
-      { routeId: 'jack-layton-wards', direction: 'inbound', label: '← Jack Layton' },
+      { routeId: 'jack-layton-wards', direction: 'inbound', label: '\u2190 Jack Layton' },
     ],
   },
   {
@@ -45,7 +45,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     description: 'The most popular island destination. Steps from Centreville Amusement Park, picnic grounds, and the lagoon.',
     address: 'Centre Island, Toronto Islands',
     routes: [
-      { routeId: 'jack-layton-centre', direction: 'inbound', label: '← Jack Layton' },
+      { routeId: 'jack-layton-centre', direction: 'inbound', label: '\u2190 Jack Layton' },
     ],
   },
   {
@@ -55,7 +55,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     description: "Western island terminal near Billy Bishop Airport and Hanlan's beach. Gateway to the quieter western islands.",
     address: "Hanlan's Point, Toronto Islands",
     routes: [
-      { routeId: 'jack-layton-hanlans', direction: 'inbound', label: '← Jack Layton' },
+      { routeId: 'jack-layton-hanlans', direction: 'inbound', label: '\u2190 Jack Layton' },
     ],
   },
 ];
@@ -86,6 +86,15 @@ export function etaMinutesToDock(
   const distKm = haversineKm(lat, lon, dock.coordinates[1], dock.coordinates[0]);
   const speedKmh = sogKnots * 1.852;
   return Math.round((distKm / speedKmh) * 60);
+}
+
+export function nearestDockOf(lat: number, lon: number, candidates: DockLocation[]): DockLocation {
+  if (candidates.length === 0) return DOCK_LOCATIONS[0];
+  return candidates.reduce((best, d) => {
+    const distBest = haversineKm(lat, lon, best.coordinates[1], best.coordinates[0]);
+    const distD = haversineKm(lat, lon, d.coordinates[1], d.coordinates[0]);
+    return distD < distBest ? d : best;
+  });
 }
 
 export function nearestDock(lat: number, lon: number): DockLocation {
