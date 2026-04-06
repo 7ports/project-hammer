@@ -42,7 +42,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       # Fail fast — typecheck and lint before spending time on a full build.
       - name: TypeScript — typecheck
