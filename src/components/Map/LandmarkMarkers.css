@@ -1,11 +1,11 @@
 .landmark-marker {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: rgba(6, 13, 26, 0.82);
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(6px);
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -64,9 +64,18 @@
   color: #fff;
 }
 
-/* Dock marker — slightly larger to distinguish from landmarks */
+/* Dock marker — distinct from landmark markers with cyan border */
 .dock-marker {
-  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  background: rgba(6, 13, 26, 0.75);
+  border: 1.5px solid rgba(0, 229, 255, 0.3);
+}
+
+.dock-marker:hover {
+  border-color: rgba(0, 229, 255, 0.7);
+  transform: scale(1.2);
 }
 
 /* Dock popup */
