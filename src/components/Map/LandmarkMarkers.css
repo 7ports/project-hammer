@@ -63,3 +63,72 @@
 .landmark-popup__close:hover {
   color: #fff;
 }
+
+/* Dock marker — slightly larger to distinguish from landmarks */
+.dock-marker {
+  font-size: 16px;
+}
+
+/* Dock popup */
+.dock-popup .maplibregl-popup-content {
+  max-width: 200px;
+}
+
+.dock-popup__section {
+  margin-top: 8px;
+}
+
+.dock-popup__section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px 0;
+}
+
+.dock-popup__vessel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dock-popup__vessel-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.dock-popup__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dock-popup__status-dot--docked {
+  background: #ff9800;
+}
+
+.dock-popup__status-dot--moving {
+  background: #4caf50;
+}
+
+.dock-popup__vessel-name {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dock-popup__eta {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dock-popup__empty {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 6px 0 0 0;
+  font-style: italic;
+}

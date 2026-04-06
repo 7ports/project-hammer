@@ -23,7 +23,7 @@ function AppContent() {
         <MapErrorBoundary>
           <FerryMap>
             <RouteLayer />
-            <DockMarkers />
+            <DockMarkers vessels={vessels} />
             {/* WakeTrail renders behind vessels */}
             <WakeTrail vessels={vessels} positionHistory={positionHistory} />
             <VesselLayer
