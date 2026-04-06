@@ -87,6 +87,10 @@ function codeToCondition(code: number): string {
   if (code <= 79) return 'Snow';
   if (code <= 89) return 'Rain Shower';
   if (code <= 99) return 'Thunderstorm';
+  // ECCC proprietary codes (100–399)
+  if (code >= 100 && code <= 199) return 'Rain';
+  if (code >= 200 && code <= 299) return 'Drizzle';
+  if (code >= 300 && code <= 399) return 'Drizzle';
   return 'Unknown';
 }
 
