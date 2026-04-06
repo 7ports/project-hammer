@@ -85,6 +85,9 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 1100,
+  },
   envPrefix: ['VITE_'],
   server: {
     proxy: {
