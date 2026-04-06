@@ -58,6 +58,6 @@ jobs:
       # the Docker image over the network.
       - name: Deploy to Fly.io
         working-directory: server
-        run: fly deploy --remote-only
+        run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

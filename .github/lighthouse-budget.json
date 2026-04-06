@@ -1,0 +1,18 @@
+[
+  {
+    "path": "/*",
+    "timings": [
+      { "metric": "interactive", "budget": 5000 },
+      { "metric": "first-contentful-paint", "budget": 3000 }
+    ],
+    "resourceSizes": [
+      { "resourceType": "total", "budget": 2000 }
+    ],
+    "scores": [
+      { "category": "performance", "minScore": 0.75 },
+      { "category": "accessibility", "minScore": 0.90 },
+      { "category": "best-practices", "minScore": 0.90 },
+      { "category": "pwa", "minScore": 0.90 }
+    ]
+  }
+]
