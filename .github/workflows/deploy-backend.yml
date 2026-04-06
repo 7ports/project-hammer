@@ -15,7 +15,7 @@ name: Deploy Backend
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
