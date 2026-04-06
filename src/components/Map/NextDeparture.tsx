@@ -38,14 +38,53 @@ export function NextDeparture({ className }: NextDepartureProps) {
       .filter(r => r.times.length > 0);
   }, [activeSeason, upcomingDepartures]);
 
-  if (loading || error || routeDepartures.length === 0) return null;
+  const nextAnyDeparture = useMemo(() => {
+    if (!activeSeason || routeDepartures.length > 0) return null;
+    let earliest: string | null = null;
+    for (const route of activeSeason.routes) {
+      const deps = upcomingDepartures(route.routeId as RouteId, 'outbound', 50);
+      if (deps.length > 0 && (earliest === null || deps[0].time < earliest)) {
+        earliest = deps[0].time;
+      }
+    }
+    return earliest;
+  }, [activeSeason, routeDepartures, upcomingDepartures]);
+
+  const asideClass = ['next-departure', className].filter(Boolean).join(' ');
+
+  if (loading) {
+    return (
+      <aside className={asideClass} role="complementary" aria-label="Next ferry departures">
+        <div className="next-departure__label">Next departures</div>
+        <p className="next-departure__empty">Loading schedule…</p>
+      </aside>
+    );
+  }
+
+  if (error) {
+    return (
+      <aside className={asideClass} role="complementary" aria-label="Next ferry departures">
+        <div className="next-departure__label">Next departures</div>
+        <p className="next-departure__empty">Schedule unavailable</p>
+      </aside>
+    );
+  }
+
+  if (routeDepartures.length === 0) {
+    return (
+      <aside className={asideClass} role="complementary" aria-label="Next ferry departures">
+        <div className="next-departure__label">Next departures</div>
+        <p className="next-departure__empty">
+          {nextAnyDeparture
+            ? `No service now — next at ${formatTime(nextAnyDeparture)}`
+            : 'No service today'}
+        </p>
+      </aside>
+    );
+  }
 
   return (
-    <aside
-      className={['next-departure', className].filter(Boolean).join(' ')}
-      role="complementary"
-      aria-label="Next ferry departures"
-    >
+    <aside className={asideClass} role="complementary" aria-label="Next ferry departures">
       <div className="next-departure__label">Next departures</div>
       <ul className="next-departure__list">
         {routeDepartures.map(({ routeId, name, times }) => (
