@@ -139,16 +139,18 @@ npm start               # node dist/index.js
 
 ## Active Work
 
-**Current sprint goal:** Phase 1 — Backend Proxy (critical path — nothing works without this)
-
-**In progress:**
-- [ ] —
+**Current sprint goal:** Phase 5 — deploy to production at ferries.yyz.live
 
 **Recently completed:**
 - [x] Phase 0: Project scaffolded (Vite react-ts, server/ structure, Voltron agents, env files)
+- [x] Phase 1: Backend AIS proxy (Express + ws, SSE stream, Fly.io config)
+- [x] Phase 2: Map Foundation (MapLibre map, AIS hooks, design system)
+- [x] Phase 3: Information panel, live service status, vessel interaction
+- [x] Phase 4: Production readiness (Terraform infra, CI/CD, PWA, weather, tests)
 
 **Known issues / tech debt:**
-- (none yet)
+- Manual infra steps needed before first deploy (see infra/README.md)
+- vite-plugin-pwa installed with --legacy-peer-deps (Vite 8 peer dep range)
 
 ---
 
@@ -157,6 +159,7 @@ npm start               # node dist/index.js
 | Agent | File | Purpose |
 |---|---|---|
 | `scrum-master` | `scrum-master.md` | Work breakdown, task assignment, sprint coordination |
+| `project-planner` | `project-planner.md` | Tech research, architecture design, project plan docs |
 | `fullstack-dev` | `fullstack-dev.md` | React/TS frontend + Node.js/Express backend |
 | `devops-engineer` | `devops-engineer.md` | Terraform, CI/CD, Fly.io, S3/CloudFront |
 | `ui-designer` | `ui-designer.md` | Dark maritime theme, glassmorphism, mobile-first PWA |
@@ -171,7 +174,8 @@ npm start               # node dist/index.js
 - **git** — version control operations
 - **github** — PR/issue management
 - **memory** — persist decisions across sessions
-- **project-voltron** — scaffold new agent templates, submit session reflections
+- **project-voltron** — scaffold new agent templates, submit session reflections, progress tracking
+- **alexandria** — tooling setup guides; call `quick_setup` before installing any tool, `update_guide` after
 
 ---
 

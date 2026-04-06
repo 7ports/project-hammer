@@ -1,0 +1,63 @@
+# .github/workflows/deploy-backend.yml
+#
+# Builds and deploys the Node.js/Express backend to Fly.io on every push to
+# main that touches server/ files.
+#
+# Required GitHub Actions secrets (Settings -> Secrets and variables -> Actions):
+#   FLY_API_TOKEN — from project-hammer-important-values.txt  (DO NOT commit)
+#
+# The Fly.io app name is hardcoded to "project-hammer-api" (matches fly.toml).
+# Runtime secrets (AISSTREAM_API_KEY, CORS_ORIGIN) are set once via flyctl:
+#   fly secrets set AISSTREAM_API_KEY=<value> --app project-hammer-api
+#   fly secrets set CORS_ORIGIN=https://ferries.yyz.live --app project-hammer-api
+
+name: Deploy Backend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  deploy:
+    name: Typecheck + deploy to Fly.io
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      # Typecheck before deploying — fail fast before pushing a broken image.
+      - name: TypeScript — typecheck
+        working-directory: server
+        run: npm run typecheck
+
+      # Compile to dist/ to confirm the build succeeds locally before Fly.io
+      # attempts a remote Docker build.
+      - name: Build
+        working-directory: server
+        run: npm run build
+
+      # Install the Fly CLI. The action pins to the latest stable release.
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      # --remote-only: Fly.io builds the Docker image on their infrastructure.
+      # This is faster than --local-only in CI because it avoids transferring
+      # the Docker image over the network.
+      - name: Deploy to Fly.io
+        working-directory: server
+        run: fly deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

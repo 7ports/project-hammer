@@ -1,0 +1,336 @@
+/* ============================================================
+   PanelShell — Desktop static panel + Mobile bottom sheet
+   Breakpoint matches AppShell: min-width 1024px
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Base shell — shared between desktop and mobile
+   ------------------------------------------------------------ */
+.panel-shell {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------
+   Desktop (≥ 1024px): static right-column panel
+   ------------------------------------------------------------ */
+.panel-shell--desktop {
+  /* Sizing and scroll handled by AppShell grid column */
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Custom scrollbar — maritime feel */
+  scrollbar-width: thin;
+  scrollbar-color: var(--ocean-light) transparent;
+}
+
+.panel-shell--desktop::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-shell--desktop::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-shell--desktop::-webkit-scrollbar-thumb {
+  background: var(--ocean-light);
+  border-radius: var(--radius-full);
+}
+
+/* ------------------------------------------------------------
+   Mobile (< 1024px): fixed bottom sheet, floats above map
+   ------------------------------------------------------------ */
+.panel-shell--mobile {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto;
+  overflow: hidden;
+
+  /* Glassmorphism surface */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-bottom: none;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-lg);
+
+  z-index: var(--z-panel);
+
+  /* Safe area — notched devices */
+  padding-bottom: env(safe-area-inset-bottom);
+
+  /* Snap animation — overridden to none in reduced-motion */
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Collapsed: only the handle + summary strip visible (72px) */
+.panel-shell--mobile.is-collapsed {
+  transform: translateY(calc(100% - 72px));
+}
+
+/* Expanded: sheet rises to ~65vh from bottom */
+.panel-shell--mobile.is-expanded {
+  transform: translateY(calc(100% - 65vh));
+}
+
+/* Disable snap transition when user prefers reduced motion.
+   The global rule in index.css already sets transition-duration
+   to 0.01ms; this rule is belt-and-suspenders. */
+@media (prefers-reduced-motion: reduce) {
+  .panel-shell--mobile {
+    transition: none;
+  }
+}
+
+/* Hide the mobile sheet entirely on desktop */
+@media (min-width: 1024px) {
+  .panel-shell--mobile {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   Drag handle pill
+   ------------------------------------------------------------ */
+.panel-shell__handle-bar {
+  /* Centering row */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 28px;
+  flex-shrink: 0;
+  /* No padding-top — the 28px height itself provides the touch target */
+  cursor: grab;
+  touch-action: none; /* prevent browser scroll interference */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.panel-shell__handle-bar:active {
+  cursor: grabbing;
+}
+
+/* The visible pill */
+.panel-shell__handle-bar::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--glass-border);
+}
+
+/* Minimum 44×44px touch target — height padded via the row itself
+   plus collapsed-summary row brings combined height to ≥44px */
+
+/* ------------------------------------------------------------
+   Collapsed summary row (mobile only, visible when collapsed)
+   ------------------------------------------------------------ */
+.panel-shell__collapsed-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  gap: var(--space-2);
+}
+
+/* Hide summary in expanded state — content fills instead */
+.panel-shell--mobile.is-expanded .panel-shell__collapsed-summary {
+  display: none;
+}
+
+/* On desktop the summary is never rendered */
+@media (min-width: 1024px) {
+  .panel-shell__collapsed-summary {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   Scrollable content area
+   ------------------------------------------------------------ */
+.panel-shell__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Mobile max height so it doesn't push past 65vh */
+  max-height: 65vh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ocean-light) transparent;
+}
+
+.panel-shell__content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-shell__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-shell__content::-webkit-scrollbar-thumb {
+  background: var(--ocean-light);
+  border-radius: var(--radius-full);
+}
+
+/* Collapsed mobile: hide scrollable content */
+.panel-shell--mobile.is-collapsed .panel-shell__content {
+  display: none;
+}
+
+/* Desktop: content fills full height (panel itself scrolls) */
+@media (min-width: 1024px) {
+  .panel-shell__content {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* ------------------------------------------------------------
+   Section wrapper — padded, with bottom divider
+   ------------------------------------------------------------ */
+.panel-shell__section {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.panel-shell__section:last-child {
+  border-bottom: none;
+}
+
+/* Weather strip section: strip has its own internal padding */
+.panel-shell__section--weather {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ------------------------------------------------------------
+   Vessel placeholder — shown when no vessel is selected
+   ------------------------------------------------------------ */
+.panel-shell__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+  min-height: 80px;
+}
+
+/* ------------------------------------------------------------
+   Disruption banner
+   ------------------------------------------------------------ */
+.disruption-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-radius: var(--radius-md);
+  color: var(--status-offline);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.disruption-banner__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.disruption-banner__message {
+  /* Allow the message to wrap naturally */
+}
+
+.disruption-banner__message--clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.disruption-banner__toggle {
+  /* Reset */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  /* Inline text button */
+  color: var(--accent-cyan);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.disruption-banner__toggle:hover {
+  color: var(--text-primary);
+}
+
+.disruption-banner__toggle:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disruption-banner__toggle {
+    transition: none;
+  }
+}
+
+.disruption-banner__dismiss {
+  /* Reset */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  /* Sizing — minimum 44×44 touch target */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: calc(var(--space-1) * -1) calc(var(--space-1) * -1) 0 0;
+  flex-shrink: 0;
+  /* Appearance */
+  color: var(--status-offline);
+  font-size: var(--text-base);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 150ms ease;
+}
+
+.disruption-banner__dismiss:hover {
+  background: rgba(244, 67, 54, 0.15);
+}
+
+.disruption-banner__dismiss:focus-visible {
+  outline: 2px solid var(--status-offline);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disruption-banner__dismiss {
+    transition: none;
+  }
+}

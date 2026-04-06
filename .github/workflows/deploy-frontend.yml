@@ -1,0 +1,99 @@
+# .github/workflows/deploy-frontend.yml
+#
+# Builds and deploys the React SPA to S3 + CloudFront on every push to main.
+#
+# Required GitHub Actions secrets (Settings -> Secrets and variables -> Actions):
+#   AWS_ACCESS_KEY_ID          — from project-hammer-important-values.txt  (DO NOT commit)
+#   AWS_SECRET_ACCESS_KEY      — from project-hammer-important-values.txt  (DO NOT commit)
+#   VITE_MAPTILER_API_KEY      — MapTiler tile API key (embedded in frontend bundle)
+#   VITE_API_URL               — Backend base URL, e.g. https://project-hammer-api.fly.dev
+#   S3_BUCKET_NAME             — Output of: terraform output s3_bucket_name
+#   CLOUDFRONT_DISTRIBUTION_ID — Output of: terraform output cloudfront_distribution_id
+
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "vite.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+
+permissions:
+  id-token: write   # Required for OIDC — kept for future migration to role-based auth
+  contents: read
+
+jobs:
+  deploy:
+    name: Build + deploy to S3/CloudFront
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # Fail fast — typecheck and lint before spending time on a full build.
+      - name: TypeScript — typecheck
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      # Inject secrets as VITE_ env vars so Vite bakes them into the bundle.
+      # VITE_MAPTILER_API_KEY is intentionally public in the bundle (it is an
+      # API key scoped to allowed referrers in MapTiler's dashboard).
+      # AISSTREAM_API_KEY is server-side only and NEVER passed here.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_MAPTILER_API_KEY: ${{ secrets.VITE_MAPTILER_API_KEY }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      # Upload HTML files with no-cache so browsers always re-fetch the entry
+      # point. This ensures users pick up new hashed asset filenames immediately.
+      - name: Sync HTML (no-cache)
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html"
+
+      # Upload all other assets with a 1-year immutable cache header.
+      # Vite appends a content hash to every JS/CSS/image filename so there
+      # are no stale-cache issues — a changed file always gets a new name.
+      - name: Sync assets (long-lived cache)
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --exclude "*.html" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # Invalidate CloudFront so edge caches immediately serve the updated HTML.
+      # The /* path invalidation covers index.html and any other entry points.
+      # Asset files (hashed names) never need invalidating because they are new
+      # object keys after each build.
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*.html" "/"

@@ -5,6 +5,7 @@ import { aisProxy } from './lib/aisProxy';
 import { healthRouter } from './routes/health';
 import { aisRouter } from './routes/ais';
 import { weatherRouter } from './routes/weather';
+import ferryStatusRouter from './routes/ferryStatus';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use('/api/health', healthRouter);
 app.use('/api/ais', aisRouter);
 app.use('/api/weather', weatherRouter);
+app.use('/api/ferry-status', ferryStatusRouter);
 
 export default app;
 

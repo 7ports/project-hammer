@@ -117,31 +117,57 @@ describe('GET /api/ais (SSE)', () => {
 // mocking Date.now to simulate staleness.
 
 describe('GET /api/weather', () => {
-  const mockWeatherData = { features: [] }
+  // Minimal GeoMet SWOB-realtime response (flat properties format)
+  const mockGeoMetResponse = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-79.3962, 43.6274] },
+        properties: {
+          station_name: 'Billy Bishop Toronto City A',
+          obs_date_tm: '2026-04-05T18:00:00+00:00',
+          air_temp: 8.5,
+          wind_spd: 19.0,
+          wind_dir: 270,
+          max_wind_spd: 28.0,
+          rel_hum: 71,
+          visibility: 15.0,
+          mslp: 101.8,
+          present_weather: '02',
+        },
+      },
+    ],
+  }
 
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
 
-  it('returns 200 with upstream data on a fresh request', async () => {
+  it('returns 200 with transformed WeatherObservation on a fresh request', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => mockWeatherData,
+        json: async () => mockGeoMetResponse,
       }),
     )
 
     const res = await request(app).get('/api/weather')
     expect(res.status).toBe(200)
-    expect(res.body).toEqual(mockWeatherData)
+    expect(res.body).toMatchObject({
+      stationName: expect.any(String),
+      observedAt: expect.any(String),
+      condition: expect.any(String),
+      precipitationWarning: expect.any(Boolean),
+    })
   })
 
   it('serves cached data within the 5-minute TTL (fetch called only once)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => mockWeatherData,
+      json: async () => mockGeoMetResponse,
     })
     vi.stubGlobal('fetch', fetchMock)
 
