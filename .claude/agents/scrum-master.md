@@ -43,6 +43,8 @@ The tool automatically:
 4. Runs the agent with full permissions
 5. Returns the agent's output when it completes
 
+**Important:** When constructing the `task` parameter, inject the full content of the agent's `.md` role definition directly into the prompt — do not instruct the agent to read its own file. Agent context windows start fresh and cannot self-read their template without help.
+
 ### Rules
 
 - **One task per invocation** — each call should correspond to exactly one task from the work plan
@@ -174,6 +176,7 @@ Call `mcp__project-voltron__get_progress` at any time to review the current stat
 **Web / Fullstack projects:**
 - Include an integration smoke-test task in every QA phase: "verify each frontend `fetch`/`EventSource` URL against the actual Express route mounting paths in `server/src/index.ts`". This 5-minute check catches URL mismatches that survive typecheck, lint, and code review.
 - When a feature consumes an external data source, add a dedicated research task before the implementation task. The research agent should document the API schema, CORS posture, polling interval, and what does NOT exist — this prevents trial-and-error during implementation.
+- When a task involves a third-party API integration, add an explicit acceptance criterion: "Verify field names against a live API response before writing tests. Save one real response as a fixture file in `__fixtures__/`." Invented field names produce green tests against broken integrations.
 
 **Unity projects:**
 - When planning tasks that touch multiple scenes or involve scene transitions, flag singleton/component availability across scene boundaries as a risk. Ask the developer how persistent objects are handled (DontDestroyOnLoad, scene-loaded callbacks, etc.) before sequencing implementation tasks.

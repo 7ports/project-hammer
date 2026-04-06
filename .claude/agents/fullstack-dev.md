@@ -92,6 +92,12 @@ Always produce a `.dockerignore` alongside any backend Dockerfile. Exclude `node
 **SSE routes + supertest:**
 `supertest` hangs on SSE endpoints because it waits for the response to close. Use raw `http.request` for SSE integration tests instead.
 
+**ErrorBoundary scoping:**
+Scope `ErrorBoundary` components to the specific subtree they protect. Never wrap the entire `<App>` in a single boundary unless you intend all errors to display the same fallback message. A `<MapErrorBoundary>` should wrap only the map subtree — not the weather strip or panel shell.
+
+**External API runtime guards:**
+When consuming data from an external API, add runtime guards for `undefined` even when TypeScript types declare a field as `number | null`. API responses are uncontrolled at runtime — a field typed as `number | null` can arrive as `undefined` from a malformed or unexpected response, producing silent `NaN` renders or broken UI. Guard at the parse/transform boundary before trusting the shape.
+
 ## What You Don't Do
 
 - Write Terraform, CI/CD pipelines, or Dockerfiles (that's `devops-engineer`)

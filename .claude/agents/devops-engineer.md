@@ -95,9 +95,13 @@ CMD ["node", "dist/index.js"]
 
 **Key rules:**
 - Multi-stage builds to minimize image size
-- `.dockerignore` for node_modules, .git, .env
+- `.dockerignore` for node_modules, .git, .env — but **never exclude `src/`** (the builder stage copies and compiles it; excluding it produces a silent empty `dist/`)
+- Always audit `.dockerignore` when writing or reviewing a Dockerfile — confirm the source directory is NOT excluded
 - Non-root user in production images
 - Health check endpoint configured
+
+**vite-plugin-pwa with Vite 5+:**
+As of 2026, `vite-plugin-pwa` has a peer dependency range conflict with Vite 5+. Install with `--legacy-peer-deps` and document this in the project's Alexandria guide.
 
 ## Fly.io Specifics
 
