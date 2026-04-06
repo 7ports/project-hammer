@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import type { Vessel } from '../types/vessel';
 import type { VesselPosition } from '../types/ais';
 import type { DockLocation } from '../lib/docks';
@@ -30,6 +31,7 @@ const DOCK_OUTBOUND_ROUTES: Record<string, Array<{ routeId: RouteId; direction: 
 
 export interface VesselPositionsResult {
   vessels: Vessel[];
+  vesselPositionsRef: RefObject<Vessel[]>;
   connectionStatus: ConnectionStatus;
   positionHistory: Map<number, VesselPosition[]>;
 }
@@ -52,6 +54,9 @@ export function useVesselPositions(): VesselPositionsResult {
   const prevStatusRef = useRef<Map<number, Vessel['status']>>(new Map());
   // Stores the last confirmed dock position per vessel
   const lastDockedRef = useRef<Map<number, DockLocation>>(new Map());
+
+  const interpolatedRef = useRef<Vessel[]>([]);
+  const lastStateUpdateRef = useRef<number>(0);
 
   const [interpolated, setInterpolated] = useState<Vessel[]>([]);
   const [positionHistory, setPositionHistory] = useState<Map<number, VesselPosition[]>>(new Map());
@@ -142,9 +147,16 @@ export function useVesselPositions(): VesselPositionsResult {
       });
     });
 
-    setInterpolated(result);
-    setPositionHistory(new Map(positionHistoryRef.current));
+    // Always update the ref so VesselLayer can read it at 60fps imperatively
+    interpolatedRef.current = result;
+
+    // Throttle React state updates to ~10fps — WakeTrail and panel don't need 60fps
+    if (timestamp - lastStateUpdateRef.current > 100) {
+      lastStateUpdateRef.current = timestamp;
+      setInterpolated(result);
+      setPositionHistory(new Map(positionHistoryRef.current));
+    }
   });
 
-  return { vessels: interpolated, connectionStatus, positionHistory };
+  return { vessels: interpolated, vesselPositionsRef: interpolatedRef, connectionStatus, positionHistory };
 }

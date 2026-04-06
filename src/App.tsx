@@ -13,7 +13,7 @@ import { ThemeSwitcher } from './components/UI/ThemeSwitcher';
 import { PanelShell } from './components/Panel/PanelShell';
 
 function AppContent() {
-  const { vessels, connectionStatus, positionHistory } = useVesselPositions();
+  const { vessels, vesselPositionsRef, connectionStatus, positionHistory } = useVesselPositions();
   const [selectedMmsi, setSelectedMmsi] = useState<number | null>(null);
   const selectedVessel = vessels.find(v => v.mmsi === selectedMmsi) ?? null;
 
@@ -27,7 +27,7 @@ function AppContent() {
             {/* WakeTrail renders behind vessels */}
             <WakeTrail vessels={vessels} positionHistory={positionHistory} />
             <VesselLayer
-              vessels={vessels}
+              vesselPositionsRef={vesselPositionsRef}
               selectedMmsi={selectedMmsi}
               onVesselClick={setSelectedMmsi}
             />
