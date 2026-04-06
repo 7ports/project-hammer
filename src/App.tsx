@@ -11,10 +11,27 @@ import { ConnectionIndicator } from './components/UI/ConnectionIndicator';
 import { ThemeSwitcher } from './components/UI/ThemeSwitcher';
 import { PanelShell } from './components/Panel/PanelShell';
 
+const initialMmsi = (() => {
+  const param = new URLSearchParams(window.location.search).get('vessel');
+  const parsed = param ? parseInt(param, 10) : NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+})();
+
 function AppContent() {
   const { vessels, vesselPositionsRef, connectionStatus, positionHistory } = useVesselPositions();
-  const [selectedMmsi, setSelectedMmsi] = useState<number | null>(null);
+  const [selectedMmsi, setSelectedMmsi] = useState<number | null>(initialMmsi);
   const selectedVessel = vessels.find(v => v.mmsi === selectedMmsi) ?? null;
+
+  function handleVesselSelect(mmsi: number | null): void {
+    setSelectedMmsi(mmsi);
+    const url = new URL(window.location.href);
+    if (mmsi != null) {
+      url.searchParams.set('vessel', String(mmsi));
+    } else {
+      url.searchParams.delete('vessel');
+    }
+    window.history.replaceState(null, '', url.toString());
+  }
 
   return (
     <AppShell
@@ -28,7 +45,7 @@ function AppContent() {
             <VesselLayer
               vesselPositionsRef={vesselPositionsRef}
               selectedMmsi={selectedMmsi}
-              onVesselClick={setSelectedMmsi}
+              onVesselClick={handleVesselSelect}
             />
           </FerryMap>
         </MapErrorBoundary>
