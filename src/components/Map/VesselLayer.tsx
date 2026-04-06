@@ -41,6 +41,7 @@ export function VesselLayer({ vesselPositionsRef, selectedMmsi, onVesselClick }:
           mmsi: v.mmsi,
           name: v.name,
           heading: v.heading,
+          iconRotation: v.heading !== 511 ? v.heading : (v.cog ?? 0),
           status: v.status,
           color: STATUS_COLORS[v.status],
         },
@@ -84,7 +85,7 @@ export function VesselLayer({ vesselPositionsRef, selectedMmsi, onVesselClick }:
     source: 'vessels',
     layout: {
       'icon-image': 'ferry-icon',
-      'icon-rotate': ['get', 'heading'],
+      'icon-rotate': ['get', 'iconRotation'],
       'icon-rotation-alignment': 'map',
       'icon-allow-overlap': true,
       'icon-size': 1,
