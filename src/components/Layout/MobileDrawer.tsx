@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import './MobileDrawer.css';
 
@@ -27,6 +28,57 @@ export interface MobileDrawerProps {
 // ---------------------------------------------------------------------------
 
 export function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
+  const handleRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Focus management: move focus into dialog on open, restore on close.
+  // Also handles Escape-to-close and Tab focus trap.
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      handleRef.current?.focus();
+    } else {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const sheet = handleRef.current?.parentElement;
+      if (!sheet) return;
+      const focusable = Array.from(
+        sheet.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
       {/* Backdrop — clicking it closes the drawer */}
@@ -44,8 +96,9 @@ export function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
         aria-label="Ferry information"
         aria-hidden={!isOpen}
       >
-        {/* Drag handle pill (decorative — tap-to-close is on the handle row) */}
+        {/* Drag handle pill — tap/Enter/Space to close */}
         <div
+          ref={handleRef}
           className="mobile-drawer__handle"
           role="button"
           tabIndex={isOpen ? 0 : -1}

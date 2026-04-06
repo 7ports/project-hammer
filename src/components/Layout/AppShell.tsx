@@ -37,7 +37,7 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
           <button
             className="mobile-drawer-fab"
             type="button"
-            aria-label="Open ferry information"
+            aria-label={isMobileDrawerOpen ? 'Close ferry information' : 'Open ferry information'}
             aria-expanded={isMobileDrawerOpen}
             onClick={() => setMobileDrawerOpen(true)}
           >
