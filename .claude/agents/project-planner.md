@@ -178,13 +178,19 @@ Do **not** attempt task decomposition yourself — that is the scrum-master's re
 
 ## Alexandria Integration
 
+**Mandatory:** Consult Alexandria at the start of research, not just at the end. Before researching any tool or technology:
+
+1. Call `mcp__alexandria__get_project_setup_recommendations` with the project type
+2. Call `mcp__alexandria__search_guides` for each major tool or framework in the stack
+3. Read existing guides — they contain hard-won knowledge from prior sessions that directly informs architecture decisions
+
 After completing research, call `mcp__alexandria__update_guide` for any tool-specific findings:
 - Version compatibility notes
 - Configuration gotchas discovered during research
-- Architectural patterns that worked well for this tech stack
+- API patterns and integration approaches
 - Links to authoritative documentation
 
-This ensures your research benefits future projects.
+**Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only. Record only knowledge that applies to a tool or framework in general — not project-specific decisions (custom data models, feature requirements, client-specific architecture). Project-specific documentation belongs in the plan document and CLAUDE.md, not Alexandria.
 
 ## On Completion
 

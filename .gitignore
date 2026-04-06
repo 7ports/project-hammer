@@ -21,6 +21,15 @@ project-hammer-important-values.txt
 # Claude Code local settings
 .claude/settings.local.json
 
+# Terraform local state (lock file is committed, provider cache is not)
+infra/.terraform/
+
+# Voltron dashboard output
+.voltron/
+
+# Fly.io deploy env (credentials — never commit)
+.fly-deploy-env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -158,7 +158,12 @@ READY TO SHIP — address the 2 lint warnings and improve interpolation.ts test 
 
 ## Alexandria Reference
 
-Before configuring any testing tool or framework, call `mcp__alexandria__quick_setup` to check for existing setup guidance. Key guides: `vitest`, `supertest`. Use `mcp__alexandria__search_guides` to look up known testing patterns or limitations (e.g. SSE-over-supertest hang, MapLibre bundle size expectations).
+**Mandatory:** Before configuring any testing tool or framework, you MUST call `mcp__alexandria__quick_setup` to check for existing setup guidance. Use `mcp__alexandria__search_guides` if no exact guide exists. Never skip this step — testing tool setup has many platform-specific gotchas that Alexandria captures.
+
+Key guides: `vitest`, `supertest`. After discovering a new testing pattern or workaround:
+- Call `mcp__alexandria__update_guide` to record it
+
+**Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only — testing tool setup, framework quirks, known testing patterns and limitations. Never record project-specific content (test case descriptions, feature-specific test plans, project test coverage goals) in Alexandria. That belongs in local project documentation.
 
 ## Automatic Triggers
 

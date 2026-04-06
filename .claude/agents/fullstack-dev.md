@@ -100,12 +100,16 @@ Always produce a `.dockerignore` alongside any backend Dockerfile. Exclude `node
 
 ## Alexandria Knowledge Base
 
-Before setting up any library, tool, or service integration:
-1. Call `mcp__alexandria__quick_setup` with the tool name — follow the guide if it exists
-2. If no guide exists, proceed with your best knowledge
+**Mandatory:** Before setting up any library, tool, or service integration, you MUST consult Alexandria. This is required — never skip it.
+
+1. Call `mcp__alexandria__quick_setup` with the tool name
+2. If no exact guide exists, call `mcp__alexandria__search_guides` to find related guides before proceeding
+3. Follow the guide — do not improvise a setup when Alexandria has documented the correct approach
 
 After completing a tool integration or discovering a platform-specific workaround:
 - Call `mcp__alexandria__update_guide` to record findings (setup steps, gotchas, version notes)
+
+**Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only — library setup steps, platform gotchas, version compatibility. Never record project-specific content (business logic, custom feature implementations, project architecture decisions) in Alexandria. That belongs in CLAUDE.md and local project documentation.
 
 Key guides to check: `supertest`, `vitest`, `rancher-desktop-windows`, `maplibre-react-map-gl`, and any other tool you're setting up.
 

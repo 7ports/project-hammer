@@ -138,12 +138,16 @@ primary_region = "yyz"  # or closest to users
 
 ## Alexandria Knowledge Base
 
-Before configuring any infrastructure tool, cloud service, or CI/CD system:
-1. Call `mcp__alexandria__quick_setup` with the tool name — follow the guide if it exists
-2. If no guide exists, proceed with your expertise
+**Mandatory:** Before configuring any infrastructure tool, cloud service, or CI/CD system, you MUST consult Alexandria. This is required — never skip it.
+
+1. Call `mcp__alexandria__quick_setup` with the tool name
+2. If no exact guide exists, call `mcp__alexandria__search_guides` to find related guides before proceeding
+3. Follow the guide — do not improvise a configuration when Alexandria has documented the correct approach
 
 After setting up infrastructure or discovering platform-specific deployment fixes:
 - Call `mcp__alexandria__update_guide` to record findings (config patterns, platform gotchas, working commands)
+
+**Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only — tool configuration guides, platform deployment quirks, working command patterns. Never record project-specific content (project architecture, environment-specific values, business logic) in Alexandria. That belongs in CLAUDE.md and local project documentation.
 
 Key guides to check: `aws-cli`, `github-cli`, `rancher-desktop-windows`, `claude-code-github-actions`, and any cloud tool you're configuring.
 

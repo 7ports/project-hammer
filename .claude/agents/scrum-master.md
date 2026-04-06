@@ -52,13 +52,14 @@ The tool automatically:
 
 ## Alexandria Integration
 
-Before creating a work plan for any new project or when a task involves setting up a tool:
+**Mandatory:** Before creating any work plan, you MUST consult Alexandria. Specialist agents are required to check Alexandria before any tool setup — your task descriptions must enforce this explicitly.
 
 1. Call `mcp__alexandria__get_project_setup_recommendations` with the project type to get recommended tools
 2. Call `mcp__alexandria__list_guides` to see what setup documentation already exists
-3. Include tool-setup tasks in the work plan with a note: "Consult Alexandria (`quick_setup`) before beginning"
+3. For every task involving tool setup, library installation, or infrastructure, include this requirement verbatim in the task description: "**Check Alexandria first** — call `mcp__alexandria__quick_setup` before any setup step. This is mandatory."
+4. If a specialist agent reports completing a setup without consulting Alexandria, flag it as a process gap in the next reflection
 
-When planning tasks that involve infrastructure, new libraries, or third-party services, flag them as "Alexandria-ready" so specialist agents know to look up docs first.
+**Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only — tool setup guides, platform quirks, version notes, API patterns. When prompting specialist agents to update Alexandria, remind them: project-specific content (business logic, project architecture, custom configs, team conventions) belongs in CLAUDE.md and local project docs, not Alexandria.
 
 ## Task Decomposition Rules
 
