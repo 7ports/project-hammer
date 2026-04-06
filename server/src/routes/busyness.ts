@@ -5,56 +5,28 @@ const router = Router();
 
 const CKAN_URL =
   'https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/datastore_search' +
-  '?resource_id=0da005de-270d-49d1-b45b-32e2e777a381&limit=8&sort=Timestamp%20desc';
+  '?resource_id=0da005de-270d-49d1-b45b-32e2e777a381&limit=32&sort=Timestamp%20desc';
 
-// In-memory cache — refresh every 15 minutes (data updates hourly, so this is fine)
+// In-memory cache — refresh every 15 minutes
 interface CacheEntry {
-  data: BusynessResponse;
+  data: RidershipResponse;
   fetchedAt: number;
 }
 let cache: CacheEntry | null = null;
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-export type BusynessLevel = 'quiet' | 'moderate' | 'busy' | 'very-busy';
-
-interface BusynessResponse {
-  level: BusynessLevel;
-  recentRedemptionsPerHour: number | null; // null if API unavailable/stale
-  dataTimestamp: string | null;            // ISO timestamp of most recent record
-  source: 'api' | 'heuristic';
+interface RidershipRecord {
+  timestamp: string;    // ISO 8601
+  redemptions: number;
 }
 
-// Thresholds based on 11-year ridership patterns (18k/day peak summer ~= 150/15min peak)
-// These are aggregate redemptions across all routes in the most recent hour
-function levelFromRedemptions(perHour: number): BusynessLevel {
-  if (perHour < 40)  return 'quiet';
-  if (perHour < 200) return 'moderate';
-  if (perHour < 600) return 'busy';
-  return 'very-busy';
+interface RidershipResponse {
+  records: RidershipRecord[];
+  dataTimestamp: string | null;   // most recent record timestamp (may be hours old)
+  dataAgeHours: number | null;    // how many hours ago was the most recent record
 }
 
-// Deterministic heuristic fallback (aggregate only)
-function heuristicLevel(): BusynessLevel {
-  const now = new Date();
-  const hour = now.getHours();
-  const dow = now.getDay();
-  const month = now.getMonth();
-  const isWeekend = dow === 0 || dow === 6;
-  const isSummer = month >= 5 && month <= 7;
-  const isShoulderSeason = (month >= 3 && month <= 4) || (month >= 8 && month <= 9);
-  const isPeakHour = hour >= 10 && hour <= 18;
-  const isMidday = hour >= 11 && hour <= 15;
-  const isWinter = !isSummer && !isShoulderSeason;
-
-  if (isSummer && isWeekend && isPeakHour) return 'very-busy';
-  if (isSummer && (isWeekend || isMidday)) return 'busy';
-  if (isShoulderSeason && isWeekend && isPeakHour) return 'busy';
-  if (isShoulderSeason && isMidday) return 'moderate';
-  if (isWinter) return isWeekend && isMidday ? 'moderate' : 'quiet';
-  return 'moderate';
-}
-
-async function fetchBusyness(): Promise<BusynessResponse> {
+async function fetchRidership(): Promise<RidershipResponse> {
   // Check cache first
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
     return cache.data;
@@ -73,39 +45,33 @@ async function fetchBusyness(): Promise<BusynessResponse> {
       };
     };
 
-    const records = json.result?.records ?? [];
-    if (records.length === 0) throw new Error('No records');
+    const raw = json.result?.records ?? [];
+    if (raw.length === 0) throw new Error('No records');
 
-    // Sum redemptions across the last 4 records (= ~1 hour of 15-min intervals)
-    const recent = records.slice(0, 4);
-    const perHour = recent.reduce((sum, r) => sum + (r['Redemption Count'] ?? 0), 0);
-    const dataTimestamp = records[0].Timestamp;
+    // Reverse from desc to chronological order for charting
+    const records: RidershipRecord[] = raw
+      .slice()
+      .reverse()
+      .map((r) => ({
+        timestamp: r.Timestamp,
+        redemptions: r['Redemption Count'] ?? 0,
+      }));
 
-    // Only trust the data if it's less than 14 hours old (handles overnight lag)
-    const dataAge = Date.now() - new Date(dataTimestamp).getTime();
-    const isStale = dataAge > 14 * 60 * 60 * 1000;
+    const dataTimestamp = raw[0].Timestamp;
+    const dataAgeHours = (Date.now() - new Date(dataTimestamp).getTime()) / (60 * 60 * 1000);
 
-    const data: BusynessResponse = isStale
-      ? { level: heuristicLevel(), recentRedemptionsPerHour: null, dataTimestamp, source: 'heuristic' }
-      : { level: levelFromRedemptions(perHour), recentRedemptionsPerHour: perHour, dataTimestamp, source: 'api' };
-
+    const data: RidershipResponse = { records, dataTimestamp, dataAgeHours };
     cache = { data, fetchedAt: Date.now() };
     return data;
   } catch {
-    // API unavailable — fall back to heuristic
-    const data: BusynessResponse = {
-      level: heuristicLevel(),
-      recentRedemptionsPerHour: null,
-      dataTimestamp: null,
-      source: 'heuristic',
-    };
+    const data: RidershipResponse = { records: [], dataTimestamp: null, dataAgeHours: null };
     cache = { data, fetchedAt: Date.now() };
     return data;
   }
 }
 
 router.get('/', async (_req: Request, res: Response) => {
-  const data = await fetchBusyness();
+  const data = await fetchRidership();
   res.json(data);
 });
 
