@@ -41,10 +41,11 @@ export function VesselLayer({ vessels, selectedMmsi, onVesselClick }: VesselLaye
     type: 'circle',
     source: 'vessels',
     paint: {
-      'circle-radius': 8,
+      'circle-radius': 9,
       'circle-color': ['get', 'color'],
       'circle-opacity': 0.85,
-      'circle-stroke-width': 1.5,
+      'circle-blur': 0,
+      'circle-stroke-width': 2,
       'circle-stroke-color': '#ffffff',
     },
   };
@@ -55,12 +56,12 @@ export function VesselLayer({ vessels, selectedMmsi, onVesselClick }: VesselLaye
     source: 'vessels',
     filter: ['==', ['get', 'mmsi'], selectedMmsi ?? -1] as FilterSpecification,
     paint: {
-      'circle-radius': 16,
+      'circle-radius': 18,
       'circle-color': 'transparent',
       'circle-opacity': 1,
-      'circle-stroke-width': 3,
+      'circle-stroke-width': 2.5,
       'circle-stroke-color': '#00e5ff',
-      'circle-stroke-opacity': 0.4,
+      'circle-stroke-opacity': 0.6,
     },
   };
 

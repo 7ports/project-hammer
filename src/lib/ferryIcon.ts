@@ -34,8 +34,8 @@ function drawFerryIcon(): ImageData {
   ctx.quadraticCurveTo(13, 38, 13, 34);
   ctx.lineTo(13, 18);
   ctx.closePath();
-  ctx.fillStyle = '#e8f4f8';
-  ctx.strokeStyle = '#a8c8d8';
+  ctx.fillStyle = '#cce8f4';
+  ctx.strokeStyle = '#7aafc8';
   ctx.lineWidth = 1;
   ctx.fill();
   ctx.stroke();
@@ -45,7 +45,7 @@ function drawFerryIcon(): ImageData {
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(17, 18, 14, 12, 2);
-  ctx.fillStyle = '#00b4cc';
+  ctx.fillStyle = '#0ea5e9';
   ctx.globalAlpha = 0.88;
   ctx.fill();
   ctx.restore();
@@ -57,7 +57,7 @@ function drawFerryIcon(): ImageData {
   ctx.lineTo(20, 14);
   ctx.lineTo(28, 14);
   ctx.closePath();
-  ctx.fillStyle = '#00e5ff';
+  ctx.fillStyle = '#38bdf8';
   ctx.globalAlpha = 0.92;
   ctx.fill();
   ctx.restore();

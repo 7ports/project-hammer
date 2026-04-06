@@ -7,10 +7,11 @@ const routeLayer: LineLayerSpecification = {
   type: 'line',
   source: 'ferry-routes',
   paint: {
-    'line-color': '#00e5ff',
-    'line-opacity': 0.4,
-    'line-width': 2,
-    'line-dasharray': [4, 4],
+    'line-color': '#38bdf8',
+    'line-opacity': 0.55,
+    'line-width': 2.5,
+    'line-dasharray': [6, 3],
+    'line-blur': 0.5,
   },
 };
 
