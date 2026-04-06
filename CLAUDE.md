@@ -139,7 +139,7 @@ npm start               # node dist/index.js
 
 ## Active Work
 
-**Current sprint goal:** Phase 6 — production hardening & validation
+**Current sprint goal:** All phases complete — ferries.yyz.live is live
 
 **Recently completed:**
 - [x] Phase 0: Project scaffolded (Vite react-ts, server/ structure, Voltron agents, env files)
@@ -148,6 +148,9 @@ npm start               # node dist/index.js
 - [x] Phase 3: Information panel, live service status, vessel interaction
 - [x] Phase 4: Production readiness (Terraform infra, CI/CD, PWA, weather, tests)
 - [x] Phase 5: Deploy to production (Fly.io backend, S3/CloudFront frontend, CI/CD, ferries.yyz.live live)
+- [x] Phase 6: Production hardening (CI fixes, Lighthouse CI, QA smoke test — 73/73 tests)
+- [x] Phase 7: Mobile experience (MobileDrawer bottom-sheet, weather ECCC codes fix, VesselCard SOG/COG/heading, a11y WCAG 2.1 AA)
+- [x] Phase 8: Vessel intelligence (nearest-dock Haversine detection, dock context in VesselCard, NextDeparture map overlay)
 
 **Known issues / tech debt:**
 - vite-plugin-pwa installed with --legacy-peer-deps (Vite 8 peer dep range)
