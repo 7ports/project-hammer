@@ -8,7 +8,7 @@ import type { ConnectionStatus } from './useAISStream';
 import { useAnimationFrame } from './useAnimationFrame';
 import { useSchedule } from './useSchedule';
 import { lerpPosition, smoothstep } from '../lib/interpolation';
-import { nearestDock, etaMinutesToDock, DOCK_LOCATIONS } from '../lib/docks';
+import { nearestDock, nearestDockOf, etaMinutesToDock, DOCK_LOCATIONS } from '../lib/docks';
 
 const KNOTS_TO_M_PER_S = 0.514444;
 const METERS_PER_DEG_LAT = 111_320;
@@ -32,7 +32,7 @@ function deadReckon(
   };
 }
 
-const OFFLINE_THRESHOLD_MS = 60_000; // 60 seconds
+const OFFLINE_THRESHOLD_MS = 180_000; // 3 minutes (was 60s — too tight for AIS gaps)
 const DOCKED_SPEED_KNOTS = 0.5;
 const AIS_UPDATE_INTERVAL_MS = 10_000; // ~10 s between AIS pings
 const MAX_HISTORY_LENGTH = 8;
@@ -134,14 +134,31 @@ export function useVesselPositions(): VesselPositionsResult {
         positionHistoryRef.current.set(mmsi, updated);
       }
 
-      // ETA to nearest dock (only when moving)
-      const etaMinutes =
-        status === 'moving' && finalPos.sog != null
-          ? etaMinutesToDock(finalPos.latitude, finalPos.longitude, dock, finalPos.sog)
-          : undefined;
-
       // Departed-from: the dock last seen at, surfaced only while underway
       const departedFrom = status === 'moving' ? lastDockedRef.current.get(mmsi) : undefined;
+
+      // Infer travel destination from departure dock.
+      // Jack Layton (mainland) → nearest island dock; island dock → Jack Layton.
+      let destination: DockLocation | undefined;
+      if (status === 'moving') {
+        if (departedFrom !== undefined) {
+          if (departedFrom.id === 'jack-layton') {
+            const islandDocks = DOCK_LOCATIONS.filter(d => d.id !== 'jack-layton');
+            destination = nearestDockOf(finalPos.latitude, finalPos.longitude, islandDocks);
+          } else {
+            destination = DOCK_LOCATIONS.find(d => d.id === 'jack-layton') ?? dock;
+          }
+        } else {
+          // No departure history yet (cold start) — fall back to nearest dock
+          destination = dock;
+        }
+      }
+
+      // ETA to inferred destination (only when moving)
+      const etaMinutes =
+        status === 'moving' && finalPos.sog != null && destination !== undefined
+          ? etaMinutesToDock(finalPos.latitude, finalPos.longitude, destination, finalPos.sog)
+          : undefined;
 
       // Next scheduled departure from this dock (when not underway)
       let nextDepartureAt: string | undefined;
@@ -169,7 +186,8 @@ export function useVesselPositions(): VesselPositionsResult {
         ...finalPos,
         status,
         lastSeen: new Date(current.timestamp),
-        nearestDock: dock,
+        nearestDock: dock,      // always geometric nearest (for dock popups)
+        destination,            // inferred destination (for VesselCard display)
         etaMinutes,
         departedFrom,
         nextDepartureAt,

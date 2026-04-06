@@ -88,6 +88,15 @@ export function etaMinutesToDock(
   return Math.round((distKm / speedKmh) * 60);
 }
 
+export function nearestDockOf(lat: number, lon: number, candidates: DockLocation[]): DockLocation {
+  if (candidates.length === 0) return DOCK_LOCATIONS[0];
+  return candidates.reduce((best, d) => {
+    const distBest = haversineKm(lat, lon, best.coordinates[1], best.coordinates[0]);
+    const distD = haversineKm(lat, lon, d.coordinates[1], d.coordinates[0]);
+    return distD < distBest ? d : best;
+  });
+}
+
 export function nearestDock(lat: number, lon: number): DockLocation {
   let nearest = DOCK_LOCATIONS[0];
   let minDist = haversineKm(lat, lon, nearest.coordinates[1], nearest.coordinates[0]);

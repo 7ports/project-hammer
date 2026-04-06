@@ -96,7 +96,9 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
             </div>
             <div className="vessel-card__dock-row">
               <dt className="vessel-card__dock-label">DESTINATION</dt>
-              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+              <dd className="vessel-card__dock-value">
+                {vessel.destination?.name ?? vessel.nearestDock.name}
+              </dd>
             </div>
             <div className="vessel-card__dock-row">
               <dt className="vessel-card__dock-label">ETA</dt>
@@ -164,7 +166,9 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
           </span>
         </div>
         <div className="vessel-card__stat">
-          <span className="vessel-card__stat-label">Last seen</span>
+          <span className="vessel-card__stat-label">
+            {vessel.status === 'offline' ? 'Last seen' : 'AIS data'}
+          </span>
           <span className="vessel-card__stat-value">{lastSeen}</span>
         </div>
       </div>
