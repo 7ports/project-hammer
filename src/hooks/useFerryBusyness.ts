@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { config } from '../lib/config';
 
 export type BusynessLevel = 'quiet' | 'moderate' | 'busy' | 'very-busy';
 
@@ -7,25 +8,12 @@ export interface BusynessResult {
   label: string;
   description: string;
   indicatorLabel: string;
+  source: 'api' | 'heuristic';
 }
 
-export function useFerryBusyness(dockId: string): BusynessResult {
-  const [result, setResult] = useState<BusynessResult>(() => classify(dockId));
-
-  useEffect(() => {
-    const timer = setInterval(() => setResult(classify(dockId)), 60_000);
-    return () => clearInterval(timer);
-  }, [dockId]);
-
-  return result;
-}
-
-type DockConfig = {
-  indicatorLabel: string;
-  descriptions: Record<BusynessLevel, string>;
-};
-
-const DOCK_CONFIG: Record<string, DockConfig> = {
+// Per-dock display config (label + descriptions stay dock-specific even though
+// the underlying busyness level is aggregate across all routes)
+const DOCK_CONFIG: Record<string, { indicatorLabel: string; descriptions: Record<BusynessLevel, string> }> = {
   'jack-layton': {
     indicatorLabel: 'Queue',
     descriptions: {
@@ -65,13 +53,25 @@ const DOCK_CONFIG: Record<string, DockConfig> = {
 };
 
 const LEVEL_LABELS: Record<BusynessLevel, string> = {
-  'quiet':     'Quiet',
-  'moderate':  'Moderate',
-  'busy':      'Busy',
+  'quiet': 'Quiet',
+  'moderate': 'Moderate',
+  'busy': 'Busy',
   'very-busy': 'Very Busy',
 };
 
-function classify(dockId: string): BusynessResult {
+function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heuristic'): BusynessResult {
+  const cfg = DOCK_CONFIG[dockId] ?? DOCK_CONFIG['jack-layton'];
+  return {
+    level,
+    label: LEVEL_LABELS[level],
+    description: cfg.descriptions[level],
+    indicatorLabel: cfg.indicatorLabel,
+    source,
+  };
+}
+
+// Heuristic fallback (matches backend logic — used client-side when API is unreachable)
+function heuristicLevel(): BusynessLevel {
   const now = new Date();
   const hour = now.getHours();
   const dow = now.getDay();
@@ -81,50 +81,48 @@ function classify(dockId: string): BusynessResult {
   const isShoulderSeason = (month >= 3 && month <= 4) || (month >= 8 && month <= 9);
   const isPeakHour = hour >= 10 && hour <= 18;
   const isMidday = hour >= 11 && hour <= 15;
-  const isWinter = !isSummer && !isShoulderSeason;
+  if (isSummer && isWeekend && isPeakHour) return 'very-busy';
+  if (isSummer && (isWeekend || isMidday)) return 'busy';
+  if (isShoulderSeason && isWeekend && isPeakHour) return 'busy';
+  if (isShoulderSeason && isMidday) return 'moderate';
+  if (!isSummer && !isShoulderSeason) return isWeekend && isMidday ? 'moderate' : 'quiet';
+  return 'moderate';
+}
 
-  let level: BusynessLevel;
+export function useFerryBusyness(dockId: string): BusynessResult {
+  const [result, setResult] = useState<BusynessResult>(() =>
+    buildResult(dockId, heuristicLevel(), 'heuristic')
+  );
+  const dockIdRef = useRef(dockId);
+  dockIdRef.current = dockId;
 
-  if (dockId === 'jack-layton') {
-    if (isSummer && isWeekend && isPeakHour) level = 'very-busy';
-    else if (isSummer && (isWeekend || isMidday)) level = 'busy';
-    else if (isShoulderSeason && isWeekend && isPeakHour) level = 'busy';
-    else if (isShoulderSeason && isMidday) level = 'moderate';
-    else if (isWinter) level = isWeekend && isMidday ? 'moderate' : 'quiet';
-    else level = 'moderate';
+  useEffect(() => {
+    let cancelled = false;
 
-  } else if (dockId === 'centre-island') {
-    if (isSummer && isWeekend && isPeakHour) level = 'very-busy';
-    else if (isSummer && isPeakHour) level = 'busy';
-    else if (isSummer) level = 'moderate';
-    else if (isShoulderSeason && isWeekend && isPeakHour) level = 'busy';
-    else if (isShoulderSeason && isWeekend) level = 'moderate';
-    else if (isWinter && isWeekend && isMidday) level = 'quiet';
-    else level = 'quiet';
+    async function fetchAndUpdate(): Promise<void> {
+      try {
+        const res = await fetch(`${config.apiUrl}/api/ferry-busyness`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json() as { level: BusynessLevel; source: 'api' | 'heuristic' };
+        if (!cancelled) {
+          setResult(buildResult(dockIdRef.current, data.level, data.source));
+        }
+      } catch {
+        if (!cancelled) {
+          setResult(buildResult(dockIdRef.current, heuristicLevel(), 'heuristic'));
+        }
+      }
+    }
 
-  } else if (dockId === 'wards-island') {
-    if (isSummer && isWeekend && isPeakHour) level = 'busy';
-    else if (isSummer && isPeakHour) level = 'moderate';
-    else if (isShoulderSeason && isWeekend && isPeakHour) level = 'moderate';
-    else level = 'quiet';
+    void fetchAndUpdate();
+    // Re-fetch every 15 minutes (backend cache refreshes every 15 min too)
+    const timer = setInterval(() => void fetchAndUpdate(), 15 * 60 * 1000);
 
-  } else if (dockId === 'hanlans-point') {
-    if (isSummer && isWeekend && isPeakHour) level = 'very-busy';
-    else if (isSummer && isWeekend) level = 'busy';
-    else if (isSummer && isMidday) level = 'moderate';
-    else if (isShoulderSeason && isWeekend && isMidday) level = 'moderate';
-    else level = 'quiet';
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []); // intentionally empty — dockId changes handled via ref
 
-  } else {
-    level = isSummer && isWeekend && isPeakHour ? 'busy' : 'quiet';
-  }
-
-  const cfg = DOCK_CONFIG[dockId] ?? DOCK_CONFIG['jack-layton'];
-
-  return {
-    level,
-    label: LEVEL_LABELS[level],
-    description: cfg.descriptions[level],
-    indicatorLabel: cfg.indicatorLabel,
-  };
+  return result;
 }
