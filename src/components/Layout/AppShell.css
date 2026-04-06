@@ -27,6 +27,10 @@
     grid-template-columns: 1fr 360px;
   }
 
+  .app-shell--panel-collapsed {
+    grid-template-columns: 1fr;
+  }
+
   .app-shell__map {
     grid-column: 1;
   }
@@ -39,6 +43,64 @@
     backdrop-filter: var(--glass-blur);
     overflow-y: auto;
     z-index: var(--z-panel);
+  }
+}
+
+/* ============================================================
+   Desktop panel toggle button
+   Sits at the right edge of the map area to show/hide the panel.
+   Hidden on mobile — the PanelShell handles its own expand/collapse.
+   ============================================================ */
+
+.panel-toggle-btn {
+  display: none; /* hidden on mobile */
+}
+
+@media (min-width: 1024px) {
+  .panel-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: var(--z-overlay);
+
+    width: 20px;
+    height: 48px;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-right: none;
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-sm);
+
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    line-height: 1;
+
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+
+  .panel-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+
+  .panel-toggle-btn:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel-toggle-btn {
+      transition: none;
+    }
   }
 }
 
