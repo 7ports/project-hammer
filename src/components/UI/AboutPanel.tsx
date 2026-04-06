@@ -66,7 +66,6 @@ export function AboutPanel({ isOpen, onClose, triggerRef }: AboutPanelProps) {
   return (
     <div
       className="about-backdrop"
-      aria-hidden="true"
       onClick={onClose}
     >
       <div
