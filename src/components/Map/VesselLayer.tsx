@@ -1,13 +1,15 @@
 import { useEffect } from 'react';
+import type { RefObject } from 'react';
 import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import type { CircleLayerSpecification, SymbolLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
 import type { FilterSpecification } from '@maplibre/maplibre-gl-style-spec';
-import type { MapLayerMouseEvent } from 'maplibre-gl';
+import type { MapLayerMouseEvent, GeoJSONSource } from 'maplibre-gl';
 import type { FeatureCollection, Point } from 'geojson';
 import type { Vessel } from '../../types/vessel';
+import { useAnimationFrame } from '../../hooks/useAnimationFrame';
 
 interface VesselLayerProps {
-  vessels: Vessel[];
+  vesselPositionsRef: RefObject<Vessel[]>;
   selectedMmsi: number | null;
   onVesselClick: (mmsi: number) => void;
 }
@@ -18,33 +20,45 @@ const STATUS_COLORS: Record<Vessel['status'], string> = {
   offline: '#f44336',
 };
 
-export function VesselLayer({ vessels, selectedMmsi, onVesselClick }: VesselLayerProps) {
+const emptyGeoJSON: FeatureCollection<Point> = { type: 'FeatureCollection', features: [] };
+
+export function VesselLayer({ vesselPositionsRef, selectedMmsi, onVesselClick }: VesselLayerProps) {
   const { current: map } = useMap();
 
-  const geojson: FeatureCollection<Point> = {
-    type: 'FeatureCollection',
-    features: vessels.map(v => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [v.longitude, v.latitude] },
-      properties: {
-        mmsi: v.mmsi,
-        name: v.name,
-        heading: v.heading,
-        status: v.status,
-        color: STATUS_COLORS[v.status],
-      },
-    })),
-  };
+  // Imperatively push vessel positions to MapLibre on every animation frame —
+  // bypasses React reconciliation entirely for the hot animation path.
+  useAnimationFrame(() => {
+    if (!map) return;
+    const source = map.getSource('vessels') as GeoJSONSource | undefined;
+    if (!source) return;
+    const vessels = vesselPositionsRef.current ?? [];
+    const geojson: FeatureCollection<Point> = {
+      type: 'FeatureCollection',
+      features: vessels.map(v => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [v.longitude, v.latitude] },
+        properties: {
+          mmsi: v.mmsi,
+          name: v.name,
+          heading: v.heading,
+          status: v.status,
+          color: STATUS_COLORS[v.status],
+        },
+      })),
+    };
+    source.setData(geojson);
+  });
 
   const circleLayer: CircleLayerSpecification = {
     id: 'vessels-circle',
     type: 'circle',
     source: 'vessels',
     paint: {
-      'circle-radius': 8,
+      'circle-radius': 9,
       'circle-color': ['get', 'color'],
       'circle-opacity': 0.85,
-      'circle-stroke-width': 1.5,
+      'circle-blur': 0,
+      'circle-stroke-width': 2,
       'circle-stroke-color': '#ffffff',
     },
   };
@@ -55,12 +69,12 @@ export function VesselLayer({ vessels, selectedMmsi, onVesselClick }: VesselLaye
     source: 'vessels',
     filter: ['==', ['get', 'mmsi'], selectedMmsi ?? -1] as FilterSpecification,
     paint: {
-      'circle-radius': 16,
+      'circle-radius': 18,
       'circle-color': 'transparent',
       'circle-opacity': 1,
-      'circle-stroke-width': 3,
+      'circle-stroke-width': 2.5,
       'circle-stroke-color': '#00e5ff',
-      'circle-stroke-opacity': 0.4,
+      'circle-stroke-opacity': 0.6,
     },
   };
 
@@ -107,7 +121,7 @@ export function VesselLayer({ vessels, selectedMmsi, onVesselClick }: VesselLaye
   }, [map, onVesselClick]);
 
   return (
-    <Source id="vessels" type="geojson" data={geojson}>
+    <Source id="vessels" type="geojson" data={emptyGeoJSON}>
       <Layer {...circleLayer} />
       <Layer {...selectionRingLayer} />
       <Layer {...symbolLayer} />
