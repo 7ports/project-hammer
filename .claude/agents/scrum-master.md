@@ -47,10 +47,41 @@ The tool automatically:
 
 ### Rules
 
-- **One task per invocation** — each call should correspond to exactly one task from the work plan
 - **Update progress before and after** — call `update_progress("in_progress")` before invoking, and `update_progress("completed")` or `update_progress("failed")` after
 - **Review the output** — check the agent's output for errors or incomplete work before marking the task as completed
 - **Do NOT use the Agent tool** — always use `run_agent_in_docker` so agents get Docker isolation and unlimited permissions
+
+### Parallel Execution
+
+**Run independent agents in parallel whenever possible.** When multiple tasks have no dependencies on each other, call `run_agent_in_docker` for all of them in the **same response**. Claude Code sends tool calls in parallel and the MCP server handles them concurrently — multiple Docker containers will run simultaneously.
+
+```
+# Example: tasks 2, 3, 4 are all independent → call all three in one response
+run_agent_in_docker(agent="ios-dev", task="...task 2...")  ← same response
+run_agent_in_docker(agent="android-dev", task="...task 3...")  ← same response
+run_agent_in_docker(agent="mobile-qa-tester", task="...task 4...")  ← same response
+# All three Docker containers start simultaneously
+```
+
+Mark tasks as "parallelizable" in the work plan table when they have no shared file dependencies. Sequential ordering is only required when task B genuinely needs task A's output.
+
+### Task Sizing and max_turns
+
+Set `max_turns` proportionate to task complexity. Too low and the agent stops mid-work; too high wastes quota on simple tasks.
+
+| Task complexity | max_turns |
+|---|---|
+| Quick analysis, read + single-file edit | 10 |
+| Small feature (1–3 files, no tests) | 20 |
+| Medium feature (4–10 files, with tests) | 30 (default) |
+| Large multi-file implementation | 45 |
+| Full module or complex integration | 60 |
+
+**If a task would clearly need more than 50 turns, split it.** Tasks that span multiple layers (schema + API + frontend + tests) should always be split by layer. Tasks that touch more than 10 files in unrelated areas should be split by area. Smaller tasks fail faster and give more useful error output.
+
+### Voltron Modifications
+
+For any task that involves modifying Project Voltron itself (agent templates, Dockerfile, MCP server code, docs), delegate to `@agent-reflection-processor`. That is the designated agent for all Voltron edits. Do not assign Voltron modification tasks to other agents.
 
 ## Alexandria Integration
 
@@ -203,6 +234,13 @@ If `mcp__Claude_in_Chrome__tabs_context_mcp` fails or the tools are not availabl
 
 **Unity projects:**
 - When planning tasks that touch multiple scenes or involve scene transitions, flag singleton/component availability across scene boundaries as a risk. Ask the developer how persistent objects are handled (DontDestroyOnLoad, scene-loaded callbacks, etc.) before sequencing implementation tasks.
+
+**Mobile projects (React Native / iOS / Android):**
+- **iOS builds require macOS + Xcode** — Docker containers cannot run iOS simulators or produce App Store builds. Flag this immediately if the project requires native iOS compilation. Android builds can run in Docker (Java/Gradle), but the full Android SDK is not in the base Voltron image.
+- React Native Metro bundler and JS-only work runs fine in Docker. Split tasks so that JS logic and native compilation are separate concerns — assign JS tasks to `mobile-dev` in Docker, and native build/signing tasks to `ios-dev` or `android-dev` with a note that they may need to run outside Docker.
+- **Platform divergence is a frequent source of bugs** — when a feature touches both iOS and Android, add an explicit acceptance criterion: "Verify behavior on both platforms (simulator/emulator)." Do not assume shared code behaves identically.
+- For App Store / Google Play submissions, always include a dedicated `app-store-publisher` task with Fastlane setup as a prerequisite. Flag certificate provisioning and API key setup (App Store Connect API, Google Play service account) as human-input blockers.
+- When planning mobile QA tasks, specify which platform(s) and device types (phone/tablet, OS version range). Detox requires a simulator to be pre-booted — add that as a prerequisite or include it in the task description.
 
 ## On Completion
 
