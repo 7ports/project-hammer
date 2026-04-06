@@ -1,0 +1,266 @@
+.landmark-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(6, 13, 26, 0.82);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.landmark-marker:hover {
+  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.landmark-popup .maplibregl-popup-content {
+  background: rgba(10, 20, 40, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  max-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.landmark-popup .maplibregl-popup-tip {
+  border-top-color: rgba(10, 20, 40, 0.97);
+}
+
+.landmark-popup__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 20px 6px 0;
+}
+
+.landmark-popup__desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.landmark-popup__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.landmark-popup__close:hover {
+  color: #fff;
+}
+
+/* Dock marker — distinct from landmark markers with sky-blue border */
+.dock-marker {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  background: rgba(6, 13, 26, 0.75);
+  border: 1.5px solid rgba(0, 180, 216, 0.5);
+}
+
+.dock-marker:hover {
+  border-color: rgba(0, 180, 216, 0.9);
+  transform: scale(1.2);
+}
+
+/* Dock popup */
+.dock-popup .maplibregl-popup-content {
+  max-width: 240px;
+}
+
+.dock-popup__section {
+  margin-top: 8px;
+}
+
+.dock-popup__section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px 0;
+}
+
+.dock-popup__vessel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dock-popup__vessel-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.dock-popup__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dock-popup__status-dot--docked {
+  background: #ff9800;
+}
+
+.dock-popup__status-dot--moving {
+  background: #4caf50;
+}
+
+.dock-popup__vessel-name {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dock-popup__eta {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dock-popup__empty {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 6px 0 0 0;
+  font-style: italic;
+}
+
+.dock-popup__address {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 6px 0;
+}
+
+.dock-popup__summary {
+  font-size: 11px;
+  color: #00b4d8;
+  font-weight: 600;
+  margin: 4px 0 6px 0;
+}
+
+.dock-popup__schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.dock-popup__route-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.dock-popup__departure-time {
+  color: #00b4d8;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Busyness indicator */
+.dock-popup__busyness {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+
+.dock-popup__busyness-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.dock-popup__busyness-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+
+.dock-popup__busyness-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+/* Level-specific badge colours */
+.dock-popup__busyness--quiet .dock-popup__busyness-badge {
+  background: rgba(0, 230, 118, 0.15);
+  color: #00e676;
+}
+.dock-popup__busyness--moderate .dock-popup__busyness-badge {
+  background: rgba(0, 180, 216, 0.15);
+  color: #00b4d8;
+}
+.dock-popup__busyness--busy .dock-popup__busyness-badge {
+  background: rgba(255, 196, 0, 0.15);
+  color: #ffc400;
+}
+.dock-popup__busyness--very-busy .dock-popup__busyness-badge {
+  background: rgba(255, 82, 82, 0.15);
+  color: #ff5252;
+}
+
+/* Ridership chart */
+.ridership-chart {
+  margin: 8px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+
+.ridership-chart__title {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 4px;
+}
+
+.ridership-chart__age {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ridership-chart__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.ridership-chart__note {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 3px 0 0;
+  font-style: italic;
+}
+
+.ridership-chart__loading {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  margin: 4px 0;
+}

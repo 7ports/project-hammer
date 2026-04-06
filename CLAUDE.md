@@ -12,7 +12,7 @@
 **Tech Stack:** React 18 + TypeScript, Vite, MapLibre GL JS v5, react-map-gl v8 (frontend) · Node.js 20 + TypeScript, Express 5, ws (backend)
 **Node Version:** 20 LTS
 **Package Manager:** npm
-**Status:** Prototype
+**Status:** Beta
 
 **What it does:** Real-time map showing Toronto Island Ferry positions. AIS positions from aisstream.io are proxied via a Fly.io backend and streamed to a React PWA over SSE. The frontend renders ferries gliding across the harbour on a MapTiler Ocean map.
 
@@ -139,7 +139,7 @@ npm start               # node dist/index.js
 
 ## Active Work
 
-**Current sprint goal:** Phase 5 — deploy to production at ferries.yyz.live
+**Current sprint goal:** All phases complete — ferries.yyz.live is live
 
 **Recently completed:**
 - [x] Phase 0: Project scaffolded (Vite react-ts, server/ structure, Voltron agents, env files)
@@ -147,9 +147,12 @@ npm start               # node dist/index.js
 - [x] Phase 2: Map Foundation (MapLibre map, AIS hooks, design system)
 - [x] Phase 3: Information panel, live service status, vessel interaction
 - [x] Phase 4: Production readiness (Terraform infra, CI/CD, PWA, weather, tests)
+- [x] Phase 5: Deploy to production (Fly.io backend, S3/CloudFront frontend, CI/CD, ferries.yyz.live live)
+- [x] Phase 6: Production hardening (CI fixes, Lighthouse CI, QA smoke test — 73/73 tests)
+- [x] Phase 7: Mobile experience (MobileDrawer bottom-sheet, weather ECCC codes fix, VesselCard SOG/COG/heading, a11y WCAG 2.1 AA)
+- [x] Phase 8: Vessel intelligence (nearest-dock Haversine detection, dock context in VesselCard, NextDeparture map overlay)
 
 **Known issues / tech debt:**
-- Manual infra steps needed before first deploy (see infra/README.md)
 - vite-plugin-pwa installed with --legacy-peer-deps (Vite 8 peer dep range)
 
 ---

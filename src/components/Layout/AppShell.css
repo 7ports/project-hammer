@@ -27,6 +27,10 @@
     grid-template-columns: 1fr 360px;
   }
 
+  .app-shell--panel-collapsed {
+    grid-template-columns: 1fr;
+  }
+
   .app-shell__map {
     grid-column: 1;
   }
@@ -39,6 +43,64 @@
     backdrop-filter: var(--glass-blur);
     overflow-y: auto;
     z-index: var(--z-panel);
+  }
+}
+
+/* ============================================================
+   Desktop panel toggle button
+   Sits at the right edge of the map area to show/hide the panel.
+   Hidden on mobile — the PanelShell handles its own expand/collapse.
+   ============================================================ */
+
+.panel-toggle-btn {
+  display: none; /* hidden on mobile */
+}
+
+@media (min-width: 1024px) {
+  .panel-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: var(--z-overlay);
+
+    width: 20px;
+    height: 48px;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-right: none;
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-sm);
+
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    line-height: 1;
+
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+
+  .panel-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+
+  .panel-toggle-btn:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel-toggle-btn {
+      transition: none;
+    }
   }
 }
 
@@ -103,6 +165,19 @@
   letter-spacing: 0.03em;
   font-family: var(--font-mono);
   line-height: 1;
+  white-space: nowrap;
+}
+
+/* Expanded states — pill grows to fit message text */
+
+.connection-indicator--reconnecting {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.connection-indicator--offline {
+  background: rgba(185, 28, 28, 0.15);
+  border-color: rgba(185, 28, 28, 0.4);
 }
 
 /* Disable dot animation when user prefers reduced motion */
@@ -110,4 +185,44 @@
   .connection-indicator__dot {
     animation: none !important;
   }
+}
+
+/* ============================================================
+   About button — "?" circle, top-left of map
+   ============================================================ */
+
+.about-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(6, 13, 26, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+
+  /* Nudge inside safe area on notched devices */
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+}
+
+.about-btn:hover {
+  background: rgba(6, 13, 26, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.about-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
 }

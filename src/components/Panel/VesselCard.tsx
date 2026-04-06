@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRelativeTime } from '../../hooks/useRelativeTime';
 import { VESSEL_NAMES } from '../../lib/constants';
 import type { Vessel } from '../../types/vessel';
@@ -16,10 +17,19 @@ const STATUS_COLORS: Record<Vessel['status'], string> = {
 };
 
 const STATUS_LABELS: Record<Vessel['status'], string> = {
-  moving:  'Underway',
-  docked:  'At dock',
+  moving:  'In Transit',
+  docked:  'Parked',
   offline: 'Offline',
 };
+
+function formatShortTime(iso: string): string {
+  const d = new Date(iso);
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+}
 
 function headingToCardinal(heading: number): string {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
@@ -29,11 +39,28 @@ function headingToCardinal(heading: number): string {
 export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
   const lastSeen = useRelativeTime(vessel.lastSeen);
   const name = VESSEL_NAMES[vessel.mmsi] ?? vessel.name;
+  const [copied, setCopied] = useState(false);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onSelect(vessel.mmsi);
+    }
+  }
+
+  async function handleShare(e: React.MouseEvent): Promise<void> {
+    e.stopPropagation();
+    const url = `${window.location.origin}/?vessel=${vessel.mmsi}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, url });
+      } catch {
+        // user cancelled — ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     }
   }
 
@@ -47,13 +74,59 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
       aria-label={`Select ${name}`}
       onKeyDown={handleKeyDown}
     >
-      <div className="vessel-card__name">{name}</div>
-
-      <div className="vessel-card__dock-context">
-        {vessel.status === 'docked' && `AT ${vessel.nearestDock.name}`}
-        {vessel.status === 'moving' && `\u2192 ${vessel.nearestDock.name}`}
-        {vessel.status === 'offline' && 'Signal lost'}
+      <div className="vessel-card__header">
+        <div className="vessel-card__name">{name}</div>
+        <button
+          className={`vessel-card__share-btn${copied ? ' vessel-card__share-btn--copied' : ''}`}
+          onClick={handleShare}
+          aria-label={copied ? 'Link copied!' : 'Share vessel link'}
+          title={copied ? 'Link copied!' : 'Copy link'}
+        >
+          {copied ? 'Copied!' : 'Share'}
+        </button>
       </div>
+
+      {/* Route intelligence — status-specific dock fields */}
+      <dl className="vessel-card__dock-fields">
+        {vessel.status === 'moving' && (
+          <>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">ORIGIN</dt>
+              <dd className="vessel-card__dock-value">{vessel.departedFrom?.name ?? '\u2014'}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">DESTINATION</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">ETA</dt>
+              <dd className={`vessel-card__dock-value${vessel.etaMinutes !== undefined ? ' vessel-card__dock-value--eta' : ''}`}>
+                {vessel.etaMinutes !== undefined ? `~${vessel.etaMinutes} min` : '\u2014'}
+              </dd>
+            </div>
+          </>
+        )}
+        {vessel.status === 'docked' && (
+          <>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">DOCKED AT</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">NEXT DEP</dt>
+              <dd className="vessel-card__dock-value">
+                {vessel.nextDepartureAt ? formatShortTime(vessel.nextDepartureAt) : '\u2014'}
+              </dd>
+            </div>
+          </>
+        )}
+        {vessel.status === 'offline' && (
+          <div className="vessel-card__dock-row">
+            <dt className="vessel-card__dock-label">LAST SEEN</dt>
+            <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+          </div>
+        )}
+      </dl>
 
       <div className="vessel-card__status">
         <span
