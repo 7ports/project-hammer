@@ -88,12 +88,31 @@ jobs:
             --exclude "*.html" \
             --cache-control "public, max-age=31536000, immutable"
 
-      # Invalidate CloudFront so edge caches immediately serve the updated HTML.
-      # The /* path invalidation covers index.html and any other entry points.
-      # Asset files (hashed names) never need invalidating because they are new
-      # object keys after each build.
+      # Service workers and manifests must NEVER be cached long-term.
+      # sw.js (and workbox chunks) are un-hashed by design — browsers poll
+      # them byte-for-byte to detect updates. If CloudFront serves a stale
+      # sw.js the entire update mechanism breaks and users get stuck on old
+      # app versions. robots.txt and sitemap.xml are also un-hashed static
+      # files whose changes should be visible to crawlers immediately.
+      # This step runs AFTER the long-cache sync so it overwrites those
+      # specific files with the correct no-cache header.
+      - name: Sync service worker, manifest, and SEO files (no-cache)
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --exclude "*" \
+            --include "sw.js" \
+            --include "workbox-*.js" \
+            --include "manifest.webmanifest" \
+            --include "robots.txt" \
+            --include "sitemap.xml" \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      # Invalidate CloudFront so edge caches immediately serve updated files.
+      # HTML, service worker, manifest, and SEO files are all un-hashed and
+      # must be invalidated on every deploy. Hashed JS/CSS/image assets are
+      # new object keys after each build and never need explicit invalidation.
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*.html" "/"
+            --paths "/*.html" "/" "/sw.js" "/workbox-*.js" "/manifest.webmanifest" "/robots.txt" "/sitemap.xml"

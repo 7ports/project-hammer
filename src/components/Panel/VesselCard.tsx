@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRelativeTime } from '../../hooks/useRelativeTime';
 import { VESSEL_NAMES } from '../../lib/constants';
 import type { Vessel } from '../../types/vessel';
@@ -38,11 +39,28 @@ function headingToCardinal(heading: number): string {
 export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
   const lastSeen = useRelativeTime(vessel.lastSeen);
   const name = VESSEL_NAMES[vessel.mmsi] ?? vessel.name;
+  const [copied, setCopied] = useState(false);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onSelect(vessel.mmsi);
+    }
+  }
+
+  async function handleShare(e: React.MouseEvent): Promise<void> {
+    e.stopPropagation();
+    const url = `${window.location.origin}/?vessel=${vessel.mmsi}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, url });
+      } catch {
+        // user cancelled — ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     }
   }
 
@@ -56,7 +74,17 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
       aria-label={`Select ${name}`}
       onKeyDown={handleKeyDown}
     >
-      <div className="vessel-card__name">{name}</div>
+      <div className="vessel-card__header">
+        <div className="vessel-card__name">{name}</div>
+        <button
+          className={`vessel-card__share-btn${copied ? ' vessel-card__share-btn--copied' : ''}`}
+          onClick={handleShare}
+          aria-label={copied ? 'Link copied!' : 'Share vessel link'}
+          title={copied ? 'Link copied!' : 'Copy link'}
+        >
+          {copied ? 'Copied!' : 'Share'}
+        </button>
+      </div>
 
       {/* Route intelligence — status-specific dock fields */}
       <dl className="vessel-card__dock-fields">

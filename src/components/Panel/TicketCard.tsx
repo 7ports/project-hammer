@@ -9,7 +9,7 @@ const FARES = [
 
 export function TicketCard() {
   const handleBuyTickets = () => {
-    window.open('https://secure.toronto.ca', '_blank', 'noopener,noreferrer');
+    window.open('https://secure.toronto.ca/FerryTicketOnline/tickets2/index.jsp', '_blank', 'noopener,noreferrer');
   };
 
   return (
