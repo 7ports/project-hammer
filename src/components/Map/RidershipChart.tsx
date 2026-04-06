@@ -36,9 +36,9 @@ export function RidershipChart() {
   if (!data || data.records.length === 0) return null;
 
   const max = Math.max(...data.records.map(r => r.redemptions), 1);
-  const BAR_W = 6;
-  const BAR_GAP = 2;
-  const CHART_H = 40;
+  const BAR_W = 8;
+  const BAR_GAP = 3;
+  const CHART_H = 52;
   const width = data.records.length * (BAR_W + BAR_GAP);
 
   const ageLabel = data.dataAgeHours != null
@@ -50,15 +50,23 @@ export function RidershipChart() {
     ? `Calibrated from ${Math.round(bucketsLoaded / 100) / 10}k historical records`
     : '15-min intervals · Toronto Open Data';
 
+  const formatTime = (ts: string) => {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
+  const timeRange = data.records.length >= 2
+    ? `${formatTime(data.records[0].timestamp)} – ${formatTime(data.records[data.records.length - 1].timestamp)}`
+    : null;
+
   return (
     <div className="ridership-chart">
       <p className="ridership-chart__title">
-        Recent boardings <span className="ridership-chart__age">({ageLabel})</span>
+        Recent Boardings (Jack Layton) <span className="ridership-chart__age">({ageLabel})</span>
       </p>
       <svg
+        viewBox={`0 0 ${width} ${CHART_H}`}
         className="ridership-chart__svg"
-        width={width}
-        height={CHART_H}
         aria-label="Bar chart of recent ferry boardings"
         role="img"
       >
@@ -82,7 +90,8 @@ export function RidershipChart() {
           );
         })}
       </svg>
-      <p className="ridership-chart__note">{noteText}</p>
+      {timeRange && <p className="ridership-chart__note">{timeRange} · {noteText}</p>}
+      {!timeRange && <p className="ridership-chart__note">{noteText}</p>}
     </div>
   );
 }
