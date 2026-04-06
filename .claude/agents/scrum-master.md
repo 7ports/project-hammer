@@ -192,6 +192,7 @@ If `mcp__Claude_in_Chrome__tabs_context_mcp` fails or the tools are not availabl
 - **Before invoking an agent:** call `update_progress` with status `"in_progress"`
 - **After an agent completes:** call `update_progress` with status `"completed"` (or `"failed"` / `"blocked"`), then navigate the dashboard tab to refresh it
 - Call `mcp__project-voltron__get_progress` at any time to review the current state of the work plan
+- **Live log monitoring:** each `run_agent_in_docker` call writes agent output in real time to `.voltron/logs/<agent>-<timestamp>.log` on the host. The exact path is included in the tool response. Tell the user they can monitor output in a second terminal with `tail -f .voltron/logs/<logfile>`, or with `docker logs voltron-<agent>-<timestamp> -f` while the container is still running.
 
 ## Platform-Specific Planning Notes
 

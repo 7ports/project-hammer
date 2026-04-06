@@ -4,7 +4,6 @@ import type { MapLibreEvent } from 'maplibre-gl';
 import { config } from '../../lib/config';
 import { HARBOUR_CENTER, DEFAULT_ZOOM } from '../../lib/constants';
 import { loadFerryIcon } from '../../lib/ferryIcon';
-import { LandmarkMarkers } from './LandmarkMarkers';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface FerryMapProps {
@@ -41,7 +40,6 @@ export function FerryMap({ children }: FerryMapProps) {
         maxZoom={18}
         maxBounds={HARBOUR_BOUNDS}
       >
-        <LandmarkMarkers />
         {children}
       </Map>
     </div>
