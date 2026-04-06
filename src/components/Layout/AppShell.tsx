@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { MobileDrawer } from './MobileDrawer';
 import { NextDeparture } from '../Map/NextDeparture';
+import { AboutPanel } from '../UI/AboutPanel';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -15,17 +16,37 @@ interface AppShellProps {
 
 export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [isAboutOpen, setAboutOpen] = useState(false);
+  const aboutBtnRef = useRef<HTMLButtonElement>(null);
+
+  function handleAboutClose() {
+    setAboutOpen(false);
+    aboutBtnRef.current?.focus();
+  }
 
   return (
     <div className="app-shell">
       <div className="app-shell__map">
         {mapSlot}
         <NextDeparture />
+
+        <button
+          ref={aboutBtnRef}
+          className="about-btn"
+          type="button"
+          aria-label="About this app"
+          onClick={() => setAboutOpen(true)}
+        >
+          ?
+        </button>
+
         {overlaySlot && (
           <div className="app-shell__overlay" aria-live="polite">
             {overlaySlot}
           </div>
         )}
+
+        <AboutPanel isOpen={isAboutOpen} onClose={handleAboutClose} triggerRef={aboutBtnRef} />
       </div>
 
       {/* Desktop right panel — visible only at ≥1024px via CSS */}

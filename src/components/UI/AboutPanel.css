@@ -1,0 +1,213 @@
+/* ============================================================
+   AboutPanel — modal overlay with maritime glassmorphism style
+   ============================================================ */
+
+/* Backdrop */
+.about-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal card */
+.about-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 92vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: rgba(6, 13, 26, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.about-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.about-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.about-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* Header */
+.about-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.about-panel__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.about-panel__close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.about-panel__close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.about-panel__close:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Sections */
+.about-panel__section {
+  margin-bottom: 20px;
+}
+
+.about-panel__section:last-of-type {
+  margin-bottom: 0;
+}
+
+.about-panel__section-heading {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 8px 0;
+}
+
+/* Body text */
+.about-panel__body {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* List */
+.about-panel__list {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Routes table */
+.about-panel__routes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.about-panel__routes-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 0 8px 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.about-panel__routes-table td {
+  padding: 7px 8px 7px 0;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.about-panel__routes-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Fares */
+.about-panel__fares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.about-panel__fare-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.about-panel__fares-note {
+  margin-top: 10px;
+}
+
+/* Links */
+.about-panel__link {
+  color: rgba(100, 180, 255, 0.9);
+  text-decoration: none;
+}
+
+.about-panel__link:hover {
+  color: rgba(140, 200, 255, 1);
+  text-decoration: underline;
+}
+
+.about-panel__link:focus-visible {
+  outline: 2px solid rgba(100, 180, 255, 0.6);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Footer */
+.about-panel__footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.5;
+}
+
+/* Reduced motion: skip transform entrance animation */
+@media (prefers-reduced-motion: reduce) {
+  .about-panel {
+    transform: translate(-50%, -50%) !important;
+    animation: none !important;
+  }
+}
