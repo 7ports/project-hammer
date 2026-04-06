@@ -16,7 +16,7 @@ const LANDMARKS: Landmark[] = [
     name: 'Gibraltar Point Lighthouse',
     description:
       'Built in 1808, one of the oldest surviving lighthouses on the Great Lakes. A designated National Historic Site of Canada.',
-    coordinates: [-79.3919, 43.6156],
+    coordinates: [-79.3928, 43.6148],
     icon: '🏛',
   },
   {
@@ -24,7 +24,7 @@ const LANDMARKS: Landmark[] = [
     name: 'Centreville Amusement Park',
     description:
       'A family amusement park open seasonally (May–Sep) on Centre Island. Features rides, a petting zoo, and classic fairground attractions.',
-    coordinates: [-79.3820, 43.6198],
+    coordinates: [-79.3826, 43.6202],
     icon: '🎡',
   },
   {
@@ -32,7 +32,7 @@ const LANDMARKS: Landmark[] = [
     name: 'Billy Bishop Toronto City Airport',
     description:
       'A downtown island airport serving regional and leisure destinations. Connected to the mainland by a pedestrian tunnel.',
-    coordinates: [-79.3961, 43.6275],
+    coordinates: [-79.3967, 43.6275],
     icon: '✈',
   },
   {
@@ -40,7 +40,7 @@ const LANDMARKS: Landmark[] = [
     name: "Ward's Island Beach",
     description:
       'A quiet sandy beach on the eastern tip of the island, popular with residents and day-trippers seeking a peaceful escape.',
-    coordinates: [-79.3520, 43.6295],
+    coordinates: [-79.3510, 43.6299],
     icon: '🏖',
   },
   {
@@ -48,7 +48,7 @@ const LANDMARKS: Landmark[] = [
     name: "Hanlan's Point Beach",
     description:
       "Toronto's clothing-optional beach on the western tip of the island, with views of the city skyline and Lake Ontario.",
-    coordinates: [-79.3965, 43.6245],
+    coordinates: [-79.3962, 43.6248],
     icon: '🏖',
   },
   {
@@ -56,7 +56,7 @@ const LANDMARKS: Landmark[] = [
     name: 'Toronto Island Park',
     description:
       'Over 550 acres of parkland, gardens, sports fields, and trails spread across 15 islands — a beloved green escape from the city.',
-    coordinates: [-79.3784, 43.6260],
+    coordinates: [-79.3780, 43.6255],
     icon: '🌿',
   },
 ];
