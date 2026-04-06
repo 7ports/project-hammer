@@ -103,6 +103,19 @@
   letter-spacing: 0.03em;
   font-family: var(--font-mono);
   line-height: 1;
+  white-space: nowrap;
+}
+
+/* Expanded states — pill grows to fit message text */
+
+.connection-indicator--reconnecting {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.connection-indicator--offline {
+  background: rgba(185, 28, 28, 0.15);
+  border-color: rgba(185, 28, 28, 0.4);
 }
 
 /* Disable dot animation when user prefers reduced motion */

@@ -8,7 +8,6 @@ import { RouteLayer } from './components/Map/RouteLayer';
 import { MapErrorBoundary } from './components/UI/MapErrorBoundary';
 import { AppShell } from './components/Layout/AppShell';
 import { ConnectionIndicator } from './components/UI/ConnectionIndicator';
-import { OfflineBanner } from './components/UI/OfflineBanner';
 import { ThemeSwitcher } from './components/UI/ThemeSwitcher';
 import { PanelShell } from './components/Panel/PanelShell';
 
@@ -36,7 +35,6 @@ function AppContent() {
       }
       overlaySlot={
         <>
-          <OfflineBanner connectionStatus={connectionStatus} />
           <ConnectionIndicator status={connectionStatus} />
           <ThemeSwitcher />
         </>
