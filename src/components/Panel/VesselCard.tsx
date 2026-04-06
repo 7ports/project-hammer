@@ -65,15 +65,23 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
 
       <div className="vessel-card__stats">
         <div className="vessel-card__stat">
-          <span className="vessel-card__stat-label">Speed</span>
+          <span className="vessel-card__stat-label">SOG</span>
           <span className="vessel-card__stat-value">
-            {vessel.speed.toFixed(1)} kn
+            {vessel.sog != null ? `${vessel.sog.toFixed(1)} kn` : '\u2014 kn'}
+          </span>
+        </div>
+        <div className="vessel-card__stat">
+          <span className="vessel-card__stat-label">COG</span>
+          <span className="vessel-card__stat-value">
+            {vessel.cog != null ? `${Math.round(vessel.cog)}\u00b0` : '\u2014\u00b0'}
           </span>
         </div>
         <div className="vessel-card__stat">
           <span className="vessel-card__stat-label">Heading</span>
           <span className="vessel-card__stat-value">
-            {Math.round(vessel.heading)}&deg;&nbsp;{headingToCardinal(vessel.heading)}
+            {vessel.heading === 511
+              ? '\u2014\u00b0'
+              : `${Math.round(vessel.heading)}\u00b0\u00a0${headingToCardinal(vessel.heading)}`}
           </span>
         </div>
         <div className="vessel-card__stat">
