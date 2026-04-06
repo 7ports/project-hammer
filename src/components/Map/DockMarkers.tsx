@@ -62,7 +62,7 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
           <p className="dock-popup__address">📍 {activeDock.address}</p>
           <p className="landmark-popup__desc">{activeDock.description}</p>
 
-          {activeDock.id === 'jack-layton' && <BusynessIndicator />}
+          <BusynessIndicator dockId={activeDock.id} />
 
           <DockSummary dockId={activeDock.id} vessels={vessels} />
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
@@ -74,11 +74,11 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
   );
 }
 
-function BusynessIndicator() {
-  const { level, label, description } = useFerryBusyness();
+function BusynessIndicator({ dockId }: { dockId: string }) {
+  const { level, label, description, indicatorLabel } = useFerryBusyness(dockId);
   return (
     <div className={`dock-popup__busyness dock-popup__busyness--${level}`}>
-      <span className="dock-popup__busyness-label">Queue</span>
+      <span className="dock-popup__busyness-label">{indicatorLabel}</span>
       <span className="dock-popup__busyness-badge">{label}</span>
       <span className="dock-popup__busyness-desc">{description}</span>
     </div>
