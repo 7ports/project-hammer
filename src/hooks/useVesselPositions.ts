@@ -5,6 +5,7 @@ import { useAISStream } from './useAISStream';
 import type { ConnectionStatus } from './useAISStream';
 import { useAnimationFrame } from './useAnimationFrame';
 import { lerpPosition } from '../lib/interpolation';
+import { nearestDock } from '../lib/docks';
 
 const OFFLINE_THRESHOLD_MS = 60_000; // 60 seconds
 const DOCKED_SPEED_KNOTS = 0.5;
@@ -77,6 +78,7 @@ export function useVesselPositions(): VesselPositionsResult {
         ...interpolatedPos,
         status,
         lastSeen: new Date(current.timestamp),
+        nearestDock: nearestDock(interpolatedPos.latitude, interpolatedPos.longitude),
       });
     });
 
