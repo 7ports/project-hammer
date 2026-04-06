@@ -5,6 +5,7 @@ import type { DockLocation } from '../../lib/docks';
 import { VESSEL_NAMES } from '../../lib/constants';
 import { useSchedule } from '../../hooks/useSchedule';
 import { useFerryBusyness } from '../../hooks/useFerryBusyness';
+import { RidershipChart } from './RidershipChart';
 import type { Departure } from '../../types/schedule';
 import type { Vessel } from '../../types/vessel';
 import './LandmarkMarkers.css';
@@ -68,6 +69,7 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
 
           <DockSchedule dock={activeDock} upcomingDepartures={upcomingDepartures} />
+          {activeDock.id === 'jack-layton' && <RidershipChart />}
         </Popup>
       )}
     </>

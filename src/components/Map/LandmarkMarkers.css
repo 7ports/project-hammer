@@ -222,3 +222,45 @@
   background: rgba(255, 82, 82, 0.15);
   color: #ff5252;
 }
+
+/* Ridership chart */
+.ridership-chart {
+  margin: 8px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+
+.ridership-chart__title {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 4px;
+}
+
+.ridership-chart__age {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ridership-chart__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.ridership-chart__note {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 3px 0 0;
+  font-style: italic;
+}
+
+.ridership-chart__loading {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  margin: 4px 0;
+}
