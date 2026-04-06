@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { MobileDrawer } from './MobileDrawer';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -11,6 +13,8 @@ interface AppShellProps {
 }
 
 export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
+  const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
   return (
     <div className="app-shell">
       <div className="app-shell__map">
@@ -21,8 +25,32 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
           </div>
         )}
       </div>
+
+      {/* Desktop right panel — visible only at ≥1024px via CSS */}
       {panelSlot && (
         <aside className="app-shell__panel">{panelSlot}</aside>
+      )}
+
+      {/* Mobile: FAB toggle + slide-up drawer — hidden on desktop via CSS */}
+      {panelSlot && (
+        <>
+          <button
+            className="mobile-drawer-fab"
+            type="button"
+            aria-label="Open ferry information"
+            aria-expanded={isMobileDrawerOpen}
+            onClick={() => setMobileDrawerOpen(true)}
+          >
+            ⛴
+          </button>
+
+          <MobileDrawer
+            isOpen={isMobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+          >
+            {panelSlot}
+          </MobileDrawer>
+        </>
       )}
     </div>
   );
