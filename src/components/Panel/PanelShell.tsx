@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Vessel } from '../../types/vessel';
 import { useServiceStatus } from '../../hooks/useServiceStatus';
 import { VesselCard } from './VesselCard';
@@ -68,103 +68,6 @@ function DisruptionBanner({ message, onDismiss }: DisruptionBannerProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Drag hook — pointer-based, refs-only during drag (no render on every pixel)
-// ---------------------------------------------------------------------------
-
-interface UseDragSheetOptions {
-  isExpanded: boolean;
-  onSnap: (expanded: boolean) => void;
-  sheetRef: React.RefObject<HTMLDivElement | null>;
-  prefersReducedMotion: boolean;
-}
-
-function useDragSheet({
-  isExpanded,
-  onSnap,
-  sheetRef,
-  prefersReducedMotion,
-}: UseDragSheetOptions) {
-  const startYRef = useRef<number>(0);
-  const draggingRef = useRef<boolean>(false);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (prefersReducedMotion) return;
-      startYRef.current = e.clientY;
-      draggingRef.current = true;
-      e.currentTarget.setPointerCapture(e.pointerId);
-    },
-    [prefersReducedMotion],
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!draggingRef.current || !sheetRef.current) return;
-
-      const delta = e.clientY - startYRef.current;
-
-      // Clamp based on current state:
-      // Collapsed → only allow dragging up (negative delta)
-      // Expanded  → only allow dragging down (positive delta)
-      let clamped: number;
-      if (!isExpanded) {
-        clamped = Math.min(delta, 0); // only up
-      } else {
-        clamped = Math.max(delta, 0); // only down
-      }
-
-      sheetRef.current.style.transform = `translateY(${clamped}px)`;
-    },
-    [isExpanded, sheetRef],
-  );
-
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!draggingRef.current || !sheetRef.current) return;
-      draggingRef.current = false;
-
-      const delta = e.clientY - startYRef.current;
-
-      // Clear inline transform — CSS class-based transform takes over
-      sheetRef.current.style.transform = '';
-
-      // Snap decision: threshold of 50px
-      if (!isExpanded && delta < -50) {
-        onSnap(true); // collapsed → expanded
-      } else if (isExpanded && delta > 50) {
-        onSnap(false); // expanded → collapsed
-      } else {
-        // Snap back to current state (no-op on state, but force a class refresh)
-        onSnap(isExpanded);
-      }
-    },
-    [isExpanded, onSnap, sheetRef],
-  );
-
-  return { handlePointerDown, handlePointerMove, handlePointerUp };
-}
-
-// ---------------------------------------------------------------------------
-// Reduced motion detection hook
-// ---------------------------------------------------------------------------
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  return reduced;
-}
-
-// ---------------------------------------------------------------------------
 // Desktop breakpoint detection hook
 // ---------------------------------------------------------------------------
 
@@ -190,9 +93,7 @@ function useIsDesktop(): boolean {
 
 export function PanelShell({ vessel }: PanelShellProps) {
   const serviceStatus = useServiceStatus();
-  const prefersReducedMotion = usePrefersReducedMotion();
   const isDesktop = useIsDesktop();
-  const sheetRef = useRef<HTMLDivElement>(null);
 
   // Mobile sheet state
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
@@ -210,17 +111,6 @@ export function PanelShell({ vessel }: PanelShellProps) {
   const handleDismissBanner = useCallback(() => {
     setDismissedMessage(disruptionMessage);
   }, [disruptionMessage]);
-
-  const handleSnap = useCallback((expanded: boolean) => {
-    setIsExpanded(expanded);
-  }, []);
-
-  const { handlePointerDown, handlePointerMove, handlePointerUp } = useDragSheet({
-    isExpanded,
-    onSnap: handleSnap,
-    sheetRef,
-    prefersReducedMotion,
-  });
 
   // Count active (non-offline) vessels for the collapsed summary
   // We don't have the full vessel list here — vessel prop is the selected one.
@@ -282,7 +172,7 @@ export function PanelShell({ vessel }: PanelShellProps) {
   }
 
   // -------------------------------------------------------------------------
-  // Mobile: draggable bottom sheet
+  // Mobile: tap-to-expand bottom sheet (no drag gesture)
   // -------------------------------------------------------------------------
   const sheetClass = [
     'panel-shell',
@@ -292,35 +182,52 @@ export function PanelShell({ vessel }: PanelShellProps) {
 
   return (
     <div
-      ref={sheetRef}
       className={sheetClass}
       role="complementary"
       aria-label="Ferry information panel"
     >
-      {/* Drag handle */}
+      {/* Handle bar — tap target when collapsed, shows collapse button when expanded */}
       <div
         className="panel-shell__handle-bar"
-        role="button"
-        tabIndex={0}
-        aria-label={isExpanded ? 'Collapse panel' : 'Expand panel'}
-        aria-expanded={isExpanded}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onKeyDown={(e) => {
+        onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
+        role={!isExpanded ? 'button' : undefined}
+        tabIndex={!isExpanded ? 0 : undefined}
+        aria-label={!isExpanded ? 'Expand ferry information' : undefined}
+        onKeyDown={!isExpanded ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            setIsExpanded((prev) => !prev);
+            setIsExpanded(true);
           }
-        }}
-      />
+        } : undefined}
+      >
+        {isExpanded && (
+          <button
+            className="panel-shell__collapse-btn"
+            type="button"
+            aria-label="Collapse panel"
+            onClick={() => setIsExpanded(false)}
+          >
+            &#x25BC;
+          </button>
+        )}
+      </div>
 
-      {/* Collapsed strip summary */}
+      {/* Collapsed strip summary — tap to expand */}
       <div
         className="panel-shell__collapsed-summary"
         aria-hidden={isExpanded}
+        onClick={() => setIsExpanded(true)}
+        role="button"
+        tabIndex={isExpanded ? -1 : 0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsExpanded(true);
+          }
+        }}
       >
-        {collapsedLabel}
+        <span>{collapsedLabel}</span>
+        <span className="panel-shell__expand-icon" aria-hidden="true">&#x25B2;</span>
       </div>
 
       {/* Scrollable content */}

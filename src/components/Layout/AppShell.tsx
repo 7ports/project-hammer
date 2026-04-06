@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { MobileDrawer } from './MobileDrawer';
 import { NextDeparture } from '../Map/NextDeparture';
 import { AboutPanel } from '../UI/AboutPanel';
 import './AppShell.css';
@@ -15,7 +14,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
-  const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [isPanelOpen, setPanelOpen] = useState(true);
   const [isAboutOpen, setAboutOpen] = useState(false);
   const aboutBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -25,7 +24,7 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${!isPanelOpen ? ' app-shell--panel-collapsed' : ''}`}>
       <div className="app-shell__map">
         {mapSlot}
         <NextDeparture />
@@ -47,33 +46,24 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
         )}
 
         <AboutPanel isOpen={isAboutOpen} onClose={handleAboutClose} triggerRef={aboutBtnRef} />
+
+        {/* Desktop panel toggle button — visible only at ≥1024px */}
+        {panelSlot && (
+          <button
+            className="panel-toggle-btn"
+            type="button"
+            aria-label={isPanelOpen ? 'Collapse information panel' : 'Expand information panel'}
+            aria-expanded={isPanelOpen}
+            onClick={() => setPanelOpen((prev) => !prev)}
+          >
+            {isPanelOpen ? '›' : '‹'}
+          </button>
+        )}
       </div>
 
-      {/* Desktop right panel — visible only at ≥1024px via CSS */}
-      {panelSlot && (
+      {/* Right panel — visible only at ≥1024px via CSS */}
+      {panelSlot && isPanelOpen && (
         <aside className="app-shell__panel">{panelSlot}</aside>
-      )}
-
-      {/* Mobile: FAB toggle + slide-up drawer — hidden on desktop via CSS */}
-      {panelSlot && (
-        <>
-          <button
-            className="mobile-drawer-fab"
-            type="button"
-            aria-label={isMobileDrawerOpen ? 'Close ferry information' : 'Open ferry information'}
-            aria-expanded={isMobileDrawerOpen}
-            onClick={() => setMobileDrawerOpen(true)}
-          >
-            ⛴
-          </button>
-
-          <MobileDrawer
-            isOpen={isMobileDrawerOpen}
-            onClose={() => setMobileDrawerOpen(false)}
-          >
-            {panelSlot}
-          </MobileDrawer>
-        </>
       )}
     </div>
   );
