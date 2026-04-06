@@ -1,0 +1,77 @@
+/* ============================================================
+   NextDeparture — bottom-left map overlay card
+   Shows upcoming outbound ferry departures within 2 hours.
+   ============================================================ */
+
+.next-departure {
+  position: absolute;
+  bottom: 28px;
+  left: 8px;
+  z-index: var(--z-overlay, 20);
+
+  background: rgba(6, 13, 26, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+
+  /* Prevent growing too wide on large screens */
+  max-width: 260px;
+}
+
+.next-departure__label {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 5px;
+}
+
+.next-departure__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.next-departure__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.next-departure__route {
+  font-size: 12px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.next-departure__times {
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 255, 255, 0.92);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Compact on small phones */
+@media (max-width: 480px) {
+  .next-departure {
+    padding: 6px 10px;
+  }
+}
+
+/* Respect reduced motion — nothing animated here, but keep the rule for consistency */
+@media (prefers-reduced-motion: reduce) {
+  .next-departure {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(6, 13, 26, 0.95);
+  }
+}

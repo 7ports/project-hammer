@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { MobileDrawer } from './MobileDrawer';
+import { NextDeparture } from '../Map/NextDeparture';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -19,6 +20,7 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
     <div className="app-shell">
       <div className="app-shell__map">
         {mapSlot}
+        <NextDeparture />
         {overlaySlot && (
           <div className="app-shell__overlay" aria-live="polite">
             {overlaySlot}
