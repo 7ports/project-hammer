@@ -96,7 +96,7 @@
 }
 
 /* ------------------------------------------------------------
-   Drag handle pill
+   Handle bar (tap target + pill indicator)
    ------------------------------------------------------------ */
 .panel-shell__handle-bar {
   /* Centering row */
