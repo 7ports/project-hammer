@@ -21,7 +21,7 @@ export function FerryMap({ children }: FerryMapProps) {
   const mapRef = useRef<MapRef>(null);
 
   const handleMapLoad = useCallback((event: MapLibreEvent) => {
-    void loadFerryIcon(event.target);
+    loadFerryIcon(event.target);
   }, []);
 
   return (
