@@ -5,6 +5,11 @@ export function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+/** Smoothstep easing — smooth start and end, ideal for position interpolation */
+export function smoothstep(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
 /**
  * Interpolate between two angles (degrees, 0-359), taking the shortest arc.
  * Handles wraparound correctly (e.g. 350° → 10° goes via 360°/0°, not backwards through 180°).

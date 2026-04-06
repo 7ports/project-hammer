@@ -4,17 +4,24 @@ import type { MapLibreEvent } from 'maplibre-gl';
 import { config } from '../../lib/config';
 import { HARBOUR_CENTER, DEFAULT_ZOOM } from '../../lib/constants';
 import { loadFerryIcon } from '../../lib/ferryIcon';
+import { LandmarkMarkers } from './LandmarkMarkers';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface FerryMapProps {
   children?: React.ReactNode;
 }
 
+// SW corner, NE corner — Toronto harbour + island area
+const HARBOUR_BOUNDS: [[number, number], [number, number]] = [
+  [-79.45, 43.60],
+  [-79.32, 43.67],
+];
+
 export function FerryMap({ children }: FerryMapProps) {
   const mapRef = useRef<MapRef>(null);
 
   const handleMapLoad = useCallback((event: MapLibreEvent) => {
-    void loadFerryIcon(event.target);
+    loadFerryIcon(event.target);
   }, []);
 
   return (
@@ -30,7 +37,11 @@ export function FerryMap({ children }: FerryMapProps) {
         mapStyle={`https://api.maptiler.com/maps/ocean/style.json?key=${config.maptilerApiKey}`}
         onLoad={handleMapLoad}
         attributionControl={{}}
+        minZoom={12}
+        maxZoom={18}
+        maxBounds={HARBOUR_BOUNDS}
       >
+        <LandmarkMarkers />
         {children}
       </Map>
     </div>

@@ -1,0 +1,56 @@
+.theme-switcher {
+  display: flex;
+  gap: var(--space-1);
+  background: rgba(6, 13, 26, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.theme-switcher__btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  /* Ensure minimum touch target via padding compensation */
+  min-width: 22px;
+  min-height: 22px;
+}
+
+.theme-switcher__btn--active {
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.theme-switcher__btn:hover:not(.theme-switcher__btn--active) {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.theme-switcher__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.theme-switcher__btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switcher__btn {
+    transition: none;
+  }
+}

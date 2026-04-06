@@ -4,7 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Toronto Ferry Tracker</title>
+    <title>Toronto Ferry Tracker — Live Island Ferry Map</title>
+    <meta name="description" content="Real-time Toronto Island Ferry tracker. See live ferry positions, estimated arrival times, and departure schedules for Centre Island, Ward's Island, and Hanlan's Point.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Toronto Ferry Tracker">
+    <meta property="og:title" content="Toronto Ferry Tracker — Live Island Ferry Map">
+    <meta property="og:description" content="Real-time Toronto Island Ferry tracker. See live ferry positions, estimated arrival times, and departure schedules for Centre Island, Ward's Island, and Hanlan's Point.">
+    <meta property="og:url" content="https://ferries.yyz.live">
+    <meta property="og:image" content="https://ferries.yyz.live/icons/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:locale" content="en_CA">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Toronto Ferry Tracker — Live Island Ferry Map">
+    <meta name="twitter:description" content="Real-time Toronto Island Ferry tracker. Live positions, ETAs, and schedules.">
+    <meta name="twitter:image" content="https://ferries.yyz.live/icons/icon-512.png">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://ferries.yyz.live">
 
     <!-- PWA / theme -->
     <meta name="theme-color" content="#060d1a" />
@@ -20,6 +41,33 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Toronto Ferry Tracker",
+  "url": "https://ferries.yyz.live",
+  "description": "Real-time Toronto Island Ferry tracker showing live vessel positions, ETAs, and departure schedules.",
+  "applicationCategory": "TravelApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "CAD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Raj"
+  },
+  "about": {
+    "@type": "Trip",
+    "name": "Toronto Island Ferry",
+    "description": "Public ferry service connecting downtown Toronto to the Toronto Islands"
+  }
+}
+    </script>
   </head>
   <body>
     <div id="root"></div>

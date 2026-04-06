@@ -70,6 +70,47 @@
 }
 
 /* ============================================================
+   THEME: Nautical Dusk
+   ============================================================ */
+[data-theme="dusk"] {
+  --ocean-deep:    #0d0a1a;
+  --ocean-mid:     #1a1428;
+  --ocean-surface: #241c38;
+  --ocean-light:   #342850;
+  --glass-bg:      rgba(13, 10, 26, 0.85);
+  --glass-border:  rgba(244, 169, 64, 0.18);
+  --accent-cyan:     #f4a940;
+  --accent-cyan-dim: rgba(244, 169, 64, 0.25);
+  --status-moving:  #f4a940;
+  --status-docked:  #6bcf9e;
+  --text-primary:   rgba(255, 248, 235, 1);
+  --text-secondary: rgba(255, 248, 235, 0.75);
+  --text-muted:     rgba(255, 248, 235, 0.45);
+  --shadow-glow:    0 0 20px rgba(244, 169, 64, 0.2);
+}
+
+/* ============================================================
+   THEME: High Contrast
+   ============================================================ */
+[data-theme="contrast"] {
+  --ocean-deep:    #000000;
+  --ocean-mid:     #111111;
+  --ocean-surface: #222222;
+  --ocean-light:   #333333;
+  --glass-bg:      rgba(0, 0, 0, 0.95);
+  --glass-border:  rgba(255, 221, 0, 0.4);
+  --accent-cyan:     #ffdd00;
+  --accent-cyan-dim: rgba(255, 221, 0, 0.25);
+  --status-moving:  #ffdd00;
+  --status-docked:  #00ff88;
+  --status-offline: #ff4444;
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-muted:     rgba(255, 255, 255, 0.6);
+  --shadow-glow:    0 0 20px rgba(255, 221, 0, 0.3);
+}
+
+/* ============================================================
    Reset + Base
    ============================================================ */
 *, *::before, *::after {

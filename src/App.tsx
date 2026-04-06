@@ -9,10 +9,11 @@ import { MapErrorBoundary } from './components/UI/MapErrorBoundary';
 import { AppShell } from './components/Layout/AppShell';
 import { ConnectionIndicator } from './components/UI/ConnectionIndicator';
 import { OfflineBanner } from './components/UI/OfflineBanner';
+import { ThemeSwitcher } from './components/UI/ThemeSwitcher';
 import { PanelShell } from './components/Panel/PanelShell';
 
 function AppContent() {
-  const { vessels, connectionStatus, positionHistory } = useVesselPositions();
+  const { vessels, vesselPositionsRef, connectionStatus, positionHistory } = useVesselPositions();
   const [selectedMmsi, setSelectedMmsi] = useState<number | null>(null);
   const selectedVessel = vessels.find(v => v.mmsi === selectedMmsi) ?? null;
 
@@ -22,11 +23,11 @@ function AppContent() {
         <MapErrorBoundary>
           <FerryMap>
             <RouteLayer />
-            <DockMarkers />
+            <DockMarkers vessels={vessels} />
             {/* WakeTrail renders behind vessels */}
             <WakeTrail vessels={vessels} positionHistory={positionHistory} />
             <VesselLayer
-              vessels={vessels}
+              vesselPositionsRef={vesselPositionsRef}
               selectedMmsi={selectedMmsi}
               onVesselClick={setSelectedMmsi}
             />
@@ -37,6 +38,7 @@ function AppContent() {
         <>
           <OfflineBanner connectionStatus={connectionStatus} />
           <ConnectionIndicator status={connectionStatus} />
+          <ThemeSwitcher />
         </>
       }
       panelSlot={<PanelShell vessel={selectedVessel} />}

@@ -12,7 +12,6 @@ AUTH_ARGS=()
 
 docker run --rm -it \
   "${AUTH_ARGS[@]}" \
-  -e "CLAUDE_CODE_OAUTH_TOKEN=$CLAUDE_CODE_OAUTH_TOKEN" \
   -v "$(pwd):/workspace" \
   -v "$HOME/.claude:/home/voltron/.claude" \
   -v "$HOME/.claude.json:/home/voltron/.claude.json:ro" \

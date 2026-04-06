@@ -49,6 +49,7 @@ describe('interpolatePosition', () => {
 - Test API routes with supertest or similar
 - Test database queries against a test database (not mocks)
 - Test SSE/WebSocket connections with real server instances
+- **For external API integrations:** record a real response as a fixture file (e.g. `__fixtures__/weatherResponse.json`) by curling the live endpoint once. Never invent field names — invented names produce green tests against silently broken integrations (e.g. `wind_spd` instead of the real `avg_wnd_spd_10m_pst2mts`)
 
 **E2E tests:**
 - Happy path for critical user journeys
@@ -85,6 +86,8 @@ npm run build
 ```
 Report total size and largest chunks. Flag if budget exceeded.
 
+**MapLibre GL JS / Mapbox GL JS exception:** The map library chunk (~250–300 KB gzipped) is expected and unavoidable for map-based PWAs. Do not flag this as a budget violation unless a specific budget is explicitly defined in CLAUDE.md.
+
 ### 5. Lighthouse Audit
 Target scores (per CLAUDE.md or defaults):
 - Performance: 90+
@@ -105,7 +108,16 @@ Verify that:
 - Offline fallback page works
 - App installable from browser
 
-### 8. Git Status
+### 8. API URL Integrity (fullstack projects)
+```bash
+# Grep client hooks for fetch/EventSource URLs
+grep -r "fetch(|new EventSource(" src/hooks/
+# Grep server entry for route mounts
+grep "app.use(" server/src/index.ts
+```
+Verify each client URL pattern appears as a mounted path in the server. Mismatches (e.g. `/api/ais/stream` vs `/api/ais`) survive typecheck, lint, and unit tests but break at runtime.
+
+### 9. Git Status
 ```bash
 git status
 ```
