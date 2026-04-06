@@ -49,6 +49,12 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
     >
       <div className="vessel-card__name">{name}</div>
 
+      <div className="vessel-card__dock-context">
+        {vessel.status === 'docked' && `AT ${vessel.nearestDock.name}`}
+        {vessel.status === 'moving' && `\u2192 ${vessel.nearestDock.name}`}
+        {vessel.status === 'offline' && 'Signal lost'}
+      </div>
+
       <div className="vessel-card__status">
         <span
           className="vessel-card__status-dot"
