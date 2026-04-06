@@ -70,8 +70,7 @@ function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heur
   };
 }
 
-// Heuristic fallback (matches backend logic — used client-side when API is unreachable)
-function heuristicLevel(): BusynessLevel {
+function classifyHeuristic(): BusynessLevel {
   const now = new Date();
   const hour = now.getHours();
   const dow = now.getDay();
@@ -89,9 +88,17 @@ function heuristicLevel(): BusynessLevel {
   return 'moderate';
 }
 
+interface BusynessApiResponse {
+  records: Array<{ timestamp: string; redemptions: number }>;
+  computedLevel: BusynessLevel | null;
+  bucketsLoaded: number;
+}
+
+const REFRESH_MS = 15 * 60 * 1000; // 15 minutes
+
 export function useFerryBusyness(dockId: string): BusynessResult {
   const [result, setResult] = useState<BusynessResult>(() =>
-    buildResult(dockId, heuristicLevel(), 'heuristic')
+    buildResult(dockId, classifyHeuristic(), 'heuristic')
   );
   const dockIdRef = useRef(dockId);
   dockIdRef.current = dockId;
@@ -99,30 +106,35 @@ export function useFerryBusyness(dockId: string): BusynessResult {
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchAndUpdate(): Promise<void> {
+    async function fetchLevel() {
       try {
         const res = await fetch(`${config.apiUrl}/api/ferry-busyness`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json() as { level: BusynessLevel; source: 'api' | 'heuristic' };
-        if (!cancelled) {
-          setResult(buildResult(dockIdRef.current, data.level, data.source));
-        }
+        const data = await res.json() as BusynessApiResponse;
+        if (cancelled) return;
+
+        const level = data.computedLevel ?? classifyHeuristic();
+        const source: 'api' | 'heuristic' = data.computedLevel != null ? 'api' : 'heuristic';
+        setResult(buildResult(dockIdRef.current, level, source));
       } catch {
         if (!cancelled) {
-          setResult(buildResult(dockIdRef.current, heuristicLevel(), 'heuristic'));
+          setResult(buildResult(dockIdRef.current, classifyHeuristic(), 'heuristic'));
         }
       }
     }
 
-    void fetchAndUpdate();
-    // Re-fetch every 15 minutes (backend cache refreshes every 15 min too)
-    const timer = setInterval(() => void fetchAndUpdate(), 15 * 60 * 1000);
-
+    void fetchLevel();
+    const timer = setInterval(() => void fetchLevel(), REFRESH_MS);
     return () => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, []); // intentionally empty — dockId changes handled via ref
+  }, []);
+
+  // Re-derive when dockId changes (level stays same, labels update)
+  useEffect(() => {
+    setResult((prev) => buildResult(dockId, prev.level, prev.source));
+  }, [dockId]);
 
   return result;
 }
