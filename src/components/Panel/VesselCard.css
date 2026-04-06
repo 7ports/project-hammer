@@ -45,37 +45,40 @@
   letter-spacing: 0.01em;
 }
 
-/* ---- Route intelligence ---- */
+/* ---- Dock fields grid ---- */
 
-.vessel-card__route-info {
+.vessel-card__dock-fields {
+  margin: 6px 0 4px;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  margin-bottom: var(--space-3);
 }
 
-.vessel-card__route-primary {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.vessel-card__dock-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px;
+  align-items: baseline;
 }
 
-.vessel-card__route-primary--muted {
-  color: var(--text-muted);
+.vessel-card__dock-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.vessel-card__eta {
-  color: var(--accent-cyan, #00e5ff);
-  font-family: var(--font-mono);
+.vessel-card__dock-value {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
 }
 
-.vessel-card__route-secondary {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  letter-spacing: 0.03em;
+/* ETA value gets accent colour */
+.vessel-card__dock-value--eta {
+  color: #00b4d8;
+  font-weight: 600;
 }
 
 /* ---- Status badge row ---- */

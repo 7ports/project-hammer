@@ -16,8 +16,8 @@ const STATUS_COLORS: Record<Vessel['status'], string> = {
 };
 
 const STATUS_LABELS: Record<Vessel['status'], string> = {
-  moving:  'Underway',
-  docked:  'At dock',
+  moving:  'In Transit',
+  docked:  'Parked',
   offline: 'Offline',
 };
 
@@ -58,41 +58,47 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
     >
       <div className="vessel-card__name">{name}</div>
 
-      {/* Route intelligence — status-specific */}
-      <div className="vessel-card__route-info">
+      {/* Route intelligence — status-specific dock fields */}
+      <dl className="vessel-card__dock-fields">
         {vessel.status === 'moving' && (
           <>
-            <span className="vessel-card__route-primary">
-              {'\u2192'} {vessel.nearestDock.name}
-              {vessel.etaMinutes !== undefined && (
-                <span className="vessel-card__eta"> · ETA ~{vessel.etaMinutes} min</span>
-              )}
-            </span>
-            {vessel.departedFrom && (
-              <span className="vessel-card__route-secondary">
-                Departed {vessel.departedFrom.name}
-              </span>
-            )}
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">ORIGIN</dt>
+              <dd className="vessel-card__dock-value">{vessel.departedFrom?.name ?? '\u2014'}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">DESTINATION</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">ETA</dt>
+              <dd className={`vessel-card__dock-value${vessel.etaMinutes !== undefined ? ' vessel-card__dock-value--eta' : ''}`}>
+                {vessel.etaMinutes !== undefined ? `~${vessel.etaMinutes} min` : '\u2014'}
+              </dd>
+            </div>
           </>
         )}
         {vessel.status === 'docked' && (
           <>
-            <span className="vessel-card__route-primary">
-              AT {vessel.nearestDock.name}
-            </span>
-            {vessel.nextDepartureAt && (
-              <span className="vessel-card__route-secondary">
-                Next departure {formatShortTime(vessel.nextDepartureAt)}
-              </span>
-            )}
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">DOCKED AT</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">NEXT DEP</dt>
+              <dd className="vessel-card__dock-value">
+                {vessel.nextDepartureAt ? formatShortTime(vessel.nextDepartureAt) : '\u2014'}
+              </dd>
+            </div>
           </>
         )}
         {vessel.status === 'offline' && (
-          <span className="vessel-card__route-primary vessel-card__route-primary--muted">
-            Signal lost · Last near {vessel.nearestDock.name}
-          </span>
+          <div className="vessel-card__dock-row">
+            <dt className="vessel-card__dock-label">LAST SEEN</dt>
+            <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+          </div>
         )}
-      </div>
+      </dl>
 
       <div className="vessel-card__status">
         <span

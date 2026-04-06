@@ -61,12 +61,33 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
           <p className="dock-popup__address">📍 {activeDock.address}</p>
           <p className="landmark-popup__desc">{activeDock.description}</p>
 
+          <DockSummary dockId={activeDock.id} vessels={vessels} />
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
 
           <DockSchedule dock={activeDock} upcomingDepartures={upcomingDepartures} />
         </Popup>
       )}
     </>
+  );
+}
+
+interface DockSummaryProps {
+  dockId: string;
+  vessels: Vessel[];
+}
+
+function DockSummary({ dockId, vessels }: DockSummaryProps) {
+  const parked = vessels.filter(v => v.status === 'docked' && v.nearestDock.id === dockId).length;
+  const enRoute = vessels.filter(v => v.status === 'moving' && v.nearestDock.id === dockId).length;
+
+  if (parked === 0 && enRoute === 0) return null;
+
+  const parts: string[] = [];
+  if (parked > 0) parts.push(`${parked} parked`);
+  if (enRoute > 0) parts.push(`${enRoute} en route`);
+
+  return (
+    <p className="dock-popup__summary">{parts.join(' · ')}</p>
   );
 }
 
@@ -91,7 +112,7 @@ function DockVesselList({ dockId, vessels }: DockVesselListProps) {
     <>
       {dockedVessels.length > 0 && (
         <div className="dock-popup__section">
-          <p className="dock-popup__section-label">Ferries here:</p>
+          <p className="dock-popup__section-label">Parked here</p>
           <ul className="dock-popup__vessel-list">
             {dockedVessels.map((v) => (
               <li key={v.mmsi} className="dock-popup__vessel-item">
@@ -107,7 +128,7 @@ function DockVesselList({ dockId, vessels }: DockVesselListProps) {
 
       {approachingVessels.length > 0 && (
         <div className="dock-popup__section">
-          <p className="dock-popup__section-label">Approaching:</p>
+          <p className="dock-popup__section-label">En route here</p>
           <ul className="dock-popup__vessel-list">
             {approachingVessels.map((v) => (
               <li key={v.mmsi} className="dock-popup__vessel-item">

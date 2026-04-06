@@ -148,6 +148,13 @@
   margin: 0 0 6px 0;
 }
 
+.dock-popup__summary {
+  font-size: 11px;
+  color: #00b4d8;
+  font-weight: 600;
+  margin: 4px 0 6px 0;
+}
+
 .dock-popup__schedule-item {
   display: flex;
   justify-content: space-between;
