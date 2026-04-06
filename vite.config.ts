@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -87,6 +87,10 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 1100,
+  },
+  test: {
+    // Only run frontend tests — server/ has its own vitest config
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },
   envPrefix: ['VITE_'],
   server: {
