@@ -182,6 +182,17 @@ npm start               # node dist/index.js
 
 ---
 
+## Trello
+
+**Board:** Project Hammer — https://trello.com/b/9FgKvY5J/project-hammer
+**Board ID:** `9FgKvY5J`
+
+To enable Trello integration, add to `.mcp.json` and set environment variables:
+- `TRELLO_API_KEY`
+- `TRELLO_TOKEN`
+
+---
+
 ## Things Claude Should Never Do
 
 - Commit `.env`, API keys, secrets, or credentials
