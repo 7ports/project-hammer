@@ -29,6 +29,7 @@ export function FerryMap({ children }: FerryMapProps) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Map
+        key={theme}
         ref={mapRef}
         initialViewState={{
           longitude: HARBOUR_CENTER.lng,
