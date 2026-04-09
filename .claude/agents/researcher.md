@@ -168,3 +168,10 @@ After completing research on any tool, library, API, or platform:
 - **Don't fabricate URLs** — only report URLs you actually navigated to or fetched
 - **Don't summarize away the detail** — if the requester needs the raw API shape, give them the raw API shape, not a description of it
 - **Don't mark research complete if key questions are unanswered** — list them as gaps and attempt follow-up queries before giving up
+
+## Output Efficiency
+
+- Lead with findings — skip preamble
+- Use structured tables or bullet lists; avoid long prose
+- Flag confidence level inline: ✓ confirmed / ~ estimated / ? unverified
+- Don't restate the research question — deliver results directly

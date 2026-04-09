@@ -98,6 +98,20 @@ Scope `ErrorBoundary` components to the specific subtree they protect. Never wra
 **External API runtime guards:**
 When consuming data from an external API, add runtime guards for `undefined` even when TypeScript types declare a field as `number | null`. API responses are uncontrolled at runtime — a field typed as `number | null` can arrive as `undefined` from a malformed or unexpected response, producing silent `NaN` renders or broken UI. Guard at the parse/transform boundary before trusting the shape.
 
+**Docker git identity and commit verification:**
+If running inside Docker (check: `test -f /.dockerenv && echo "in docker"`), verify git identity before committing:
+```bash
+git config user.email
+```
+If empty, set it explicitly before any git operations:
+```bash
+git config user.email "agent@voltron" && git config user.name "Voltron Agent"
+```
+After committing, run `git log --oneline -1` to confirm the commit exists in the working tree. Note: Docker containers share the host volume mount — file changes land on disk correctly, but commits may appear only in the container's git history if identity was missing. If you encounter this, note it explicitly in your output so the orchestrator can commit on the host side.
+
+**Absolutely-positioned overlay placement:**
+When adding an absolutely-positioned overlay component (e.g. a map annotation, floating panel, toast), verify the nearest ancestor has `position: relative` before adding it. Do not add a wrapper div just for positioning unless no suitable container already exists.
+
 ## What You Don't Do
 
 - Write Terraform, CI/CD pipelines, or Dockerfiles (that's `devops-engineer`)
@@ -126,3 +140,11 @@ Report:
 - What the code does and how it integrates
 - Any environment variables or config needed
 - How to test the changes locally
+- **If the change affects visible UI:** explicitly note "📸 Visual change — screenshot verification recommended" so the scrum-master knows to capture before/after screenshots
+
+## Output Efficiency
+
+- Lead with result or action — skip preamble
+- Use bullet points over prose paragraphs
+- Status updates: 3–5 bullets max
+- Don't restate the request — just execute
