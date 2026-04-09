@@ -21,9 +21,13 @@ export interface VesselPosition {
   name: string;
   latitude: number;
   longitude: number;
-  /** Degrees 0-359. Derived from TrueHeading; falls back to Cog when TrueHeading is 511. */
+  /** Normalised heading: TrueHeading when available, else Math.round(Cog) % 360. */
   heading: number;
-  /** Speed over ground in knots. */
+  /** Speed over ground in knots (raw Sog from AIS). */
+  sog: number;
+  /** Course over ground in degrees (raw Cog from AIS). */
+  cog: number;
+  /** @deprecated use sog — kept for short-term backwards compat */
   speed: number;
   /** ISO 8601 timestamp from the AIS stream. */
   timestamp: string;
@@ -211,6 +215,8 @@ export class AISProxy {
       latitude: raw.MetaData.latitude,
       longitude: raw.MetaData.longitude,
       heading,
+      sog: report.Sog,
+      cog: report.Cog,
       speed: report.Sog,
       timestamp: new Date(raw.MetaData.time_utc + ' UTC').toISOString(),
     };
