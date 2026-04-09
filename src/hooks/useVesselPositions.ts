@@ -20,11 +20,11 @@ function deadReckon(
 ): { latitude: number; longitude: number } {
   if (!pos.sog || pos.sog < 0.5) return { latitude: pos.latitude, longitude: pos.longitude };
   const speedMs = pos.sog * KNOTS_TO_M_PER_S;
-  const headingRad = (pos.heading * Math.PI) / 180;
+  const directionRad = ((pos.cog ?? pos.heading) * Math.PI) / 180;
   const distM = speedMs * (elapsedMs / 1000);
-  const dLat = (distM * Math.cos(headingRad)) / METERS_PER_DEG_LAT;
+  const dLat = (distM * Math.cos(directionRad)) / METERS_PER_DEG_LAT;
   const dLon =
-    (distM * Math.sin(headingRad)) /
+    (distM * Math.sin(directionRad)) /
     (METERS_PER_DEG_LAT * Math.cos((pos.latitude * Math.PI) / 180));
   return {
     latitude: pos.latitude + dLat,

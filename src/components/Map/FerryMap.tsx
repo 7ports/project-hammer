@@ -4,6 +4,7 @@ import type { MapLibreEvent } from 'maplibre-gl';
 import { config } from '../../lib/config';
 import { HARBOUR_CENTER, DEFAULT_ZOOM } from '../../lib/constants';
 import { loadFerryIcon } from '../../lib/ferryIcon';
+import { useTheme, getMapStyleUrl } from '../../hooks/useTheme';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface FerryMapProps {
@@ -18,6 +19,8 @@ const HARBOUR_BOUNDS: [[number, number], [number, number]] = [
 
 export function FerryMap({ children }: FerryMapProps) {
   const mapRef = useRef<MapRef>(null);
+  const { theme } = useTheme();
+  const mapStyle = getMapStyleUrl(theme, config.maptilerApiKey);
 
   const handleMapLoad = useCallback((event: MapLibreEvent) => {
     loadFerryIcon(event.target);
@@ -33,7 +36,7 @@ export function FerryMap({ children }: FerryMapProps) {
           zoom: DEFAULT_ZOOM,
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle={`https://api.maptiler.com/maps/ocean/style.json?key=${config.maptilerApiKey}`}
+        mapStyle={mapStyle}
         onLoad={handleMapLoad}
         attributionControl={{}}
         minZoom={12}

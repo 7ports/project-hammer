@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { Vessel } from '../../types/vessel';
 import { useServiceStatus } from '../../hooks/useServiceStatus';
 import { VesselCard } from './VesselCard';
@@ -180,7 +181,7 @@ export function PanelShell({ vessel }: PanelShellProps) {
     isExpanded ? 'is-expanded' : 'is-collapsed',
   ].join(' ');
 
-  return (
+  return createPortal(
     <div
       className={sheetClass}
       role="complementary"
@@ -232,6 +233,7 @@ export function PanelShell({ vessel }: PanelShellProps) {
 
       {/* Scrollable content */}
       <div className="panel-shell__content">{panelContent}</div>
-    </div>
+    </div>,
+    document.body,
   );
 }
