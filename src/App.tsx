@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ThemeProvider } from './hooks/ThemeProvider';
 import { useVesselPositions } from './hooks/useVesselPositions';
 import { FerryMap } from './components/Map/FerryMap';
 import { VesselLayer } from './components/Map/VesselLayer';
@@ -62,5 +63,9 @@ function AppContent() {
 }
 
 export default function App() {
-  return <AppContent />;
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
 }

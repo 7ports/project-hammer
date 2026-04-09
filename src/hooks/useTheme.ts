@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 export type ThemeId = 'dark' | 'dusk' | 'contrast' | 'topo' | 'day';
 
@@ -23,7 +23,17 @@ export function getMapStyleUrl(themeId: ThemeId, apiKey: string): string {
   return `https://api.maptiler.com/maps/${theme.mapStyleId}/style.json?key=${apiKey}`;
 }
 
-export function useTheme() {
+export interface ThemeContextValue {
+  theme: ThemeId;
+  setTheme: (id: ThemeId) => void;
+}
+
+export const ThemeContext = createContext<ThemeContextValue>({
+  theme: 'dark',
+  setTheme: () => undefined,
+});
+
+export function useThemeInit(): { theme: ThemeId; setThemeState: (id: ThemeId) => void } {
   const [theme, setThemeState] = useState<ThemeId>(() => {
     return (localStorage.getItem(STORAGE_KEY) as ThemeId) ?? 'dark';
   });
@@ -39,5 +49,9 @@ export function useTheme() {
     localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  return { theme, setTheme: setThemeState };
+  return { theme, setThemeState };
+}
+
+export function useTheme(): ThemeContextValue {
+  return useContext(ThemeContext);
 }
