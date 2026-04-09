@@ -77,7 +77,8 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
 }
 
 function BusynessIndicator({ dockId }: { dockId: string }) {
-  const { level, label, description, indicatorLabel } = useFerryBusyness(dockId);
+  const { level, label, description, indicatorLabel, serviceOperating } = useFerryBusyness(dockId);
+  if (!serviceOperating) return null;
   return (
     <div className={`dock-popup__busyness dock-popup__busyness--${level}`}>
       <span className="dock-popup__busyness-label">{indicatorLabel}</span>

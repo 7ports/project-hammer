@@ -18,6 +18,7 @@ export function ThemeSwitcher() {
           title={t.label}
         >
           <span className="theme-switcher__swatch" style={{ background: t.swatch }} />
+          <span className="theme-switcher__label">{t.label}</span>
         </button>
       ))}
     </div>

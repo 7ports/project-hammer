@@ -9,6 +9,7 @@ export interface BusynessResult {
   description: string;
   indicatorLabel: string;
   source: 'api' | 'heuristic';
+  serviceOperating: boolean;  // false = outside operating hours
 }
 
 // Per-dock display config (label + descriptions stay dock-specific even though
@@ -59,7 +60,13 @@ const LEVEL_LABELS: Record<BusynessLevel, string> = {
   'very-busy': 'Very Busy',
 };
 
-function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heuristic'): BusynessResult {
+function isServiceHours(): boolean {
+  const hour = new Date().getHours();
+  // Ferry operates ~06:30–23:45; closed 00:00–06:00
+  return hour >= 6;
+}
+
+function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heuristic', serviceOperating: boolean): BusynessResult {
   const cfg = DOCK_CONFIG[dockId] ?? DOCK_CONFIG['jack-layton'];
   return {
     level,
@@ -67,6 +74,7 @@ function buildResult(dockId: string, level: BusynessLevel, source: 'api' | 'heur
     description: cfg.descriptions[level],
     indicatorLabel: cfg.indicatorLabel,
     source,
+    serviceOperating,
   };
 }
 
@@ -97,9 +105,10 @@ interface BusynessApiResponse {
 const REFRESH_MS = 15 * 60 * 1000; // 15 minutes
 
 export function useFerryBusyness(dockId: string): BusynessResult {
-  const [result, setResult] = useState<BusynessResult>(() =>
-    buildResult(dockId, classifyHeuristic(), 'heuristic')
-  );
+  const [result, setResult] = useState<BusynessResult>(() => {
+    const operating = isServiceHours();
+    return buildResult(dockId, operating ? classifyHeuristic() : 'quiet', 'heuristic', operating);
+  });
   const dockIdRef = useRef(dockId);
   dockIdRef.current = dockId;
 
@@ -113,12 +122,14 @@ export function useFerryBusyness(dockId: string): BusynessResult {
         const data = await res.json() as BusynessApiResponse;
         if (cancelled) return;
 
+        const operating = isServiceHours();
         const level = data.computedLevel ?? classifyHeuristic();
         const source: 'api' | 'heuristic' = data.computedLevel != null ? 'api' : 'heuristic';
-        setResult(buildResult(dockIdRef.current, level, source));
+        setResult(buildResult(dockIdRef.current, level, source, operating));
       } catch {
         if (!cancelled) {
-          setResult(buildResult(dockIdRef.current, classifyHeuristic(), 'heuristic'));
+          const operating = isServiceHours();
+          setResult(buildResult(dockIdRef.current, operating ? classifyHeuristic() : 'quiet', 'heuristic', operating));
         }
       }
     }
@@ -133,7 +144,7 @@ export function useFerryBusyness(dockId: string): BusynessResult {
 
   // Re-derive when dockId changes (level stays same, labels update)
   useEffect(() => {
-    setResult((prev) => buildResult(dockId, prev.level, prev.source));
+    setResult((prev) => buildResult(dockId, prev.level, prev.source, prev.serviceOperating));
   }, [dockId]);
 
   return result;
