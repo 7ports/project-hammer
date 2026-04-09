@@ -75,7 +75,8 @@ You are a Senior UI/UX Designer and CSS Architect. You create beautiful, respons
 ```
 
 **Key rules:**
-- Touch targets: minimum 44x44px on mobile
+- Touch targets: minimum 44×44px on mobile. For small visual elements (icon buttons, color swatches), achieve this with padding or a transparent `::after` hit-area pseudo-element — do not make the visual itself larger. Noting this requirement without applying it is not acceptable; the QA pass will catch it.
+- All bottom-fixed elements (FABs, bottom drawers, sticky navigation bars) must use `bottom: calc(Xpx + env(safe-area-inset-bottom))` for notch/home-indicator clearance on iOS. This is required by default — do not wait to be asked.
 - `env(safe-area-inset-*)` for notched devices
 - Fluid typography with `clamp()`
 - Container queries where supported
@@ -128,6 +129,7 @@ You are a Senior UI/UX Designer and CSS Architect. You create beautiful, respons
 - Focus indicators visible on all interactive elements
 - Skip-to-content link
 - Reduced motion support
+- **Interactive overlays (modal, drawer, bottom sheet):** implement focus trap and Escape key dismissal. These are WCAG 2.1 AA requirements (2.1.2 No Keyboard Trap), not optional polish — implement them in the same task as the component, not a future cleanup pass.
 
 ## How to Work
 

@@ -73,7 +73,12 @@ npm run lint
 ```
 Must pass with zero errors. Warnings should be reviewed.
 
+**Worktree artifacts:** If lint reports errors in `.claude/worktrees/` paths, those are worktree artifacts — not project code. Add `.claude/` to `.eslintignore` (or the project's ESLint `globalIgnores` config) and fix it in the same invocation rather than deferring. Only report errors in `src/`, `server/`, and `scripts/` paths.
+
 ### 3. Unit Tests
+
+**Pre-flight:** Before running `npm test`, verify `vitest.config.ts` or `vite.config.ts` has a `test.include` glob scoped to `src/**/*.test.ts` (or equivalent). Without this, server test files may be picked up in the frontend test run, producing confusing failures.
+
 ```bash
 npm test -- --coverage
 ```
@@ -177,6 +182,12 @@ Key guides: `vitest`, `supertest`. After discovering a new testing pattern or wo
 
 **Alexandria content boundary:** Alexandria is for non-project-specific, reusable documentation only — testing tool setup, framework quirks, known testing patterns and limitations. Never record project-specific content (test case descriptions, feature-specific test plans, project test coverage goals) in Alexandria. That belongs in local project documentation.
 
+## Task Sizing
+
+For a smoke test + full quality report, keep the task to **≤6 discrete steps** and request **max_turns 40** from the scrum-master. The default max_turns (30) is insufficient for a comprehensive QA pass — the agent will hit the limit and leave the task incomplete.
+
+If you discover a lint noise source (e.g. worktree artifact paths producing false errors), **fix it in the same invocation** — add it to `.eslintignore` or the ESLint ignore config and re-run lint. Do not defer to a cleanup pass.
+
 ## Automatic Triggers
 
 Invoke this agent after:
@@ -190,3 +201,10 @@ Report:
 - The full quality report (structured as above)
 - Summary of blockers vs. warnings
 - Clear recommendation: READY TO SHIP or NOT READY (with reasons)
+
+## Output Efficiency
+
+- Lead with verdict — READY or NOT READY — then evidence
+- Use structured bullet lists; avoid prose narration
+- Skip "I ran..." preamble — just show what you found
+- Don't restate the request — just execute
