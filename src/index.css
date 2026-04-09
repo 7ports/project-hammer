@@ -111,6 +111,47 @@
 }
 
 /* ============================================================
+   THEME: Topo
+   ============================================================ */
+[data-theme="topo"] {
+  --ocean-deep:    #0f1a0a;
+  --ocean-mid:     #182612;
+  --ocean-surface: #243318;
+  --ocean-light:   #344d22;
+  --glass-bg:      rgba(15, 26, 10, 0.88);
+  --glass-border:  rgba(120, 200, 80, 0.18);
+  --accent-cyan:     #78c850;
+  --accent-cyan-dim: rgba(120, 200, 80, 0.25);
+  --status-moving:  #78c850;
+  --status-docked:  #a0e060;
+  --text-primary:   rgba(240, 255, 230, 1);
+  --text-secondary: rgba(240, 255, 230, 0.75);
+  --text-muted:     rgba(240, 255, 230, 0.45);
+  --shadow-glow:    0 0 20px rgba(120, 200, 80, 0.2);
+}
+
+/* ============================================================
+   THEME: Day
+   ============================================================ */
+[data-theme="day"] {
+  --ocean-deep:    #e8f4fd;
+  --ocean-mid:     #d0e8f8;
+  --ocean-surface: #b8daf2;
+  --ocean-light:   #9dcaeb;
+  --glass-bg:      rgba(232, 244, 253, 0.92);
+  --glass-border:  rgba(0, 100, 180, 0.2);
+  --accent-cyan:     #0066cc;
+  --accent-cyan-dim: rgba(0, 102, 204, 0.2);
+  --status-moving:  #0066cc;
+  --status-docked:  #008844;
+  --status-offline: #cc2200;
+  --text-primary:   rgba(10, 30, 60, 1);
+  --text-secondary: rgba(10, 30, 60, 0.7);
+  --text-muted:     rgba(10, 30, 60, 0.45);
+  --shadow-glow:    0 0 20px rgba(0, 102, 204, 0.15);
+}
+
+/* ============================================================
    Reset + Base
    ============================================================ */
 *, *::before, *::after {
