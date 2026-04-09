@@ -1,6 +1,7 @@
-export const VESSEL_MMSIS = [316045069, 316045081, 316045082, 316050853] as const;
+export const VESSEL_MMSIS = [316045066, 316045069, 316045081, 316045082, 316050853] as const;
 
 export const VESSEL_NAMES: Record<number, string> = {
+  316045066: 'Ongiara',
   316045069: 'Sam McBride',
   316045081: 'Wm Inglis',
   316045082: 'Thomas Rennie',
