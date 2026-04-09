@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "project_hammer",
+  "project_id": "f732a246-82f2-43f0-a3c7-197fbad70964"
+}

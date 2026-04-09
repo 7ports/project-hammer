@@ -3,8 +3,9 @@
  * MMSIs must only be hardcoded here — never in routes or other modules.
  */
 
-/** The four Toronto Island Ferry vessels tracked via aisstream.io */
+/** The five Toronto Island Ferry vessels tracked via aisstream.io */
 export const VESSEL_MMSIS = [
+  316045066, // Ongiara
   316045069, // Sam McBride
   316045081, // Wm Inglis
   316045082, // Thomas Rennie

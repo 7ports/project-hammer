@@ -3,9 +3,9 @@ export interface VesselPosition {
   name: string;
   latitude: number;
   longitude: number;
-  heading: number;        // degrees, 0-359; 511 = not available
-  speed: number;          // knots
-  sog?: number | null;    // speed over ground, knots
-  cog?: number | null;    // course over ground, degrees
+  heading: number;        // degrees, 0-359 (normalised — 511 never sent)
+  sog: number;            // speed over ground, knots
+  cog: number;            // course over ground, degrees
+  speed: number;          // @deprecated alias for sog
   timestamp: string;      // ISO 8601
 }

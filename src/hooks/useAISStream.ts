@@ -4,13 +4,34 @@ import { config } from '../lib/config';
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'offline';
 
+const LS_KEY = 'ferry_vessel_cache_v1';
+
+function loadCachedVessels(): Map<number, VesselPosition> {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return new Map();
+    const arr = JSON.parse(raw) as VesselPosition[];
+    return new Map(arr.map(v => [v.mmsi, v]));
+  } catch {
+    return new Map();
+  }
+}
+
+function saveVesselsToCache(vessels: Map<number, VesselPosition>): void {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify([...vessels.values()]));
+  } catch {
+    // quota exceeded or private browsing — ignore
+  }
+}
+
 export interface AISStreamResult {
   vessels: Map<number, VesselPosition>;
   connectionStatus: ConnectionStatus;
 }
 
 export function useAISStream(): AISStreamResult {
-  const [vessels, setVessels] = useState<Map<number, VesselPosition>>(new Map());
+  const [vessels, setVessels] = useState<Map<number, VesselPosition>>(() => loadCachedVessels());
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('reconnecting');
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Debounce onerror: only surface 'reconnecting' if the error persists beyond 3s
@@ -50,6 +71,7 @@ export function useAISStream(): AISStreamResult {
         setVessels(prev => {
           const next = new Map(prev);
           next.set(position.mmsi, position);
+          saveVesselsToCache(next);
           return next;
         });
       } catch {

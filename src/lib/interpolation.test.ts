@@ -58,6 +58,8 @@ const makeVessel = (overrides: Partial<VesselPosition>): VesselPosition => ({
   latitude: 43.63,
   longitude: -79.38,
   heading: 0,
+  sog: 5,
+  cog: 0,
   speed: 5,
   timestamp: '2026-04-05T12:00:00Z',
   ...overrides,
