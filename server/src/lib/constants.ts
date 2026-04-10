@@ -20,3 +20,9 @@ export const AISSTREAM_WS_URL = 'wss://stream.aisstream.io/v0/stream';
 
 /** Default port the Express server listens on */
 export const DEFAULT_PORT = 3001;
+
+/** aprs.fi REST API base URL */
+export const APRSFI_API_BASE = 'https://api.aprs.fi/api/get';
+
+/** VesselAPI REST API base URL */
+export const VESSELAPI_BASE = 'https://api.vesselapi.com/v1/vessel';

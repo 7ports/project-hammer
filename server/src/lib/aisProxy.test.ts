@@ -1,5 +1,5 @@
 /**
- * Unit tests for AISProxy (server/src/lib/aisProxy.ts).
+ * Unit tests for AISStreamProvider (server/src/lib/providers/aisstreamProvider.ts).
  *
  * Strategy:
  *   - Set AISSTREAM_API_KEY before importing any module that reads it, so the
@@ -7,12 +7,16 @@
  *   - Mock the 'ws' module to avoid any real network connections.
  *   - Test only the public interface: getLatestPositions(), onPosition(),
  *     and the message-handling logic via a synthetic 'message' event.
+ *
+ * Note: AISProxy in aisProxy.ts is now an alias for AISProviderManager, which
+ * requires providers as its first constructor arg. Tests use AISStreamProvider
+ * directly to keep the test surface focused on message parsing logic.
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Environment — must be set before importing config or aisProxy
+// Environment — must be set before importing config or any provider
 // ---------------------------------------------------------------------------
 
 process.env['AISSTREAM_API_KEY'] = 'test-api-key-for-vitest';
@@ -21,7 +25,7 @@ process.env['AISSTREAM_API_KEY'] = 'test-api-key-for-vitest';
 // Mock the 'ws' module
 // ---------------------------------------------------------------------------
 
-// We create a minimal EventEmitter-based mock WebSocket.  The AISProxy only
+// We create a minimal EventEmitter-based mock WebSocket.  AISStreamProvider
 // uses: on('open'), on('message'), on('error'), on('close'), and send().
 import { EventEmitter } from 'events';
 
@@ -31,6 +35,7 @@ class MockWs extends EventEmitter {
   static OPEN = 1;
   readyState = MockWs.OPEN;
   send: Mock = vi.fn();
+  terminate: Mock = vi.fn();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_url: string) {
@@ -48,11 +53,9 @@ vi.mock('ws', () => {
 // Import the module under test AFTER the mock is in place
 // ---------------------------------------------------------------------------
 
-// Dynamic import is needed inside describe/it blocks to ensure the mock is
-// active before the module resolves its dependencies.  We use a module-level
-// variable and populate it in beforeEach.
-
-import type { AISProxy as AISProxyType } from './aisProxy';
+import type { AISStreamProvider as AISStreamProviderType } from './providers/aisstreamProvider';
+import type { VesselPosition } from './types';
+import type { PositionListener } from './types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -91,7 +94,7 @@ function makeRawMessage(mmsi: number, overrides: {
 
 /** Emit a synthetic AIS message to the mock WebSocket instance. */
 function emitMessage(raw: string): void {
-  if (!mockWsInstance) throw new Error('MockWs not instantiated — call proxy.connect() first');
+  if (!mockWsInstance) throw new Error('MockWs not instantiated — call proxy.start() first');
   mockWsInstance.emit('message', Buffer.from(raw));
 }
 
@@ -100,25 +103,51 @@ function emitMessage(raw: string): void {
 // ---------------------------------------------------------------------------
 
 describe('AISProxy', () => {
-  let AISProxy: typeof AISProxyType;
-  let proxy: AISProxyType;
+  let AISStreamProvider: typeof AISStreamProviderType;
+  let proxy: AISStreamProviderType;
+
+  // Local position store + listener set — mirrors what AISProviderManager does
+  let positions: Map<number, VesselPosition>;
+  let listeners: Set<PositionListener>;
 
   beforeEach(async () => {
     mockWsInstance = null;
-    // Re-import to get a fresh class (the singleton is not used in tests;
-    // we instantiate our own AISProxy).
-    const mod = await import('./aisProxy');
-    AISProxy = mod.AISProxy;
-    proxy = new AISProxy();
-    proxy.connect();
+    positions = new Map();
+    listeners = new Set();
+
+    // Re-import to get a fresh module each test (vitest caches by default but
+    // the mock is stable; we just want a fresh instance).
+    const mod = await import('./providers/aisstreamProvider');
+    AISStreamProvider = mod.AISStreamProvider;
+
+    proxy = new AISStreamProvider('test-api-key-for-vitest');
+
+    proxy.start((pos) => {
+      positions.set(pos.mmsi, pos);
+      for (const cb of listeners) {
+        cb(pos);
+      }
+    });
     // At this point the MockWs constructor has run and mockWsInstance is set.
   });
+
+  // Helper: register a position listener and return an unsubscribe fn
+  function onPosition(cb: PositionListener): () => void {
+    listeners.add(cb);
+    return () => {
+      listeners.delete(cb);
+    };
+  }
+
+  // Helper: return a snapshot of current positions
+  function getLatestPositions(): Map<number, VesselPosition> {
+    return new Map(positions);
+  }
 
   // ── Initial state ─────────────────────────────────────────────────────────
 
   it('returns empty map before any positions are received', () => {
-    const positions = proxy.getLatestPositions();
-    expect(positions.size).toBe(0);
+    expect(getLatestPositions().size).toBe(0);
   });
 
   // ── MMSI filtering ────────────────────────────────────────────────────────
@@ -127,23 +156,21 @@ describe('AISProxy', () => {
     for (const mmsi of VALID_MMSIS) {
       emitMessage(makeRawMessage(mmsi));
     }
-    const positions = proxy.getLatestPositions();
-    expect(positions.size).toBe(4);
+    expect(getLatestPositions().size).toBe(4);
     for (const mmsi of VALID_MMSIS) {
-      expect(positions.has(mmsi)).toBe(true);
+      expect(getLatestPositions().has(mmsi)).toBe(true);
     }
   });
 
   it('ignores positions for an unknown MMSI (999999999)', () => {
     emitMessage(makeRawMessage(999999999));
-    const positions = proxy.getLatestPositions();
-    expect(positions.size).toBe(0);
-    expect(positions.has(999999999)).toBe(false);
+    expect(getLatestPositions().size).toBe(0);
+    expect(getLatestPositions().has(999999999)).toBe(false);
   });
 
   it('ignores positions for a plausible but non-ferry MMSI (316000001)', () => {
     emitMessage(makeRawMessage(316000001));
-    expect(proxy.getLatestPositions().size).toBe(0);
+    expect(getLatestPositions().size).toBe(0);
   });
 
   // ── Position storage ──────────────────────────────────────────────────────
@@ -151,7 +178,7 @@ describe('AISProxy', () => {
   it('stores and retrieves the position for MMSI 316045069 (Sam McBride)', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi, { shipName: 'SAM MCBRIDE', sog: 7 }));
-    const pos = proxy.getLatestPositions().get(mmsi);
+    const pos = getLatestPositions().get(mmsi);
     expect(pos).toBeDefined();
     expect(pos!.mmsi).toBe(mmsi);
     expect(pos!.name).toBe('SAM MCBRIDE');
@@ -162,7 +189,7 @@ describe('AISProxy', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi, { sog: 3 }));
     emitMessage(makeRawMessage(mmsi, { sog: 8 }));
-    const pos = proxy.getLatestPositions().get(mmsi);
+    const pos = getLatestPositions().get(mmsi);
     expect(pos!.speed).toBe(8);
   });
 
@@ -172,9 +199,8 @@ describe('AISProxy', () => {
     emitMessage(makeRawMessage(mmsi, { sog: 1 }));
     emitMessage(makeRawMessage(mmsi, { sog: 2 }));
     emitMessage(makeRawMessage(mmsi, { sog: 3 }));
-    const positions = proxy.getLatestPositions();
     // Still only one entry for that MMSI.
-    expect(positions.size).toBe(1);
+    expect(getLatestPositions().size).toBe(1);
   });
 
   // ── TrueHeading sentinel ──────────────────────────────────────────────────
@@ -182,14 +208,14 @@ describe('AISProxy', () => {
   it('uses TrueHeading when it is not 511', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi, { trueHeading: 135, cog: 180 }));
-    const pos = proxy.getLatestPositions().get(mmsi)!;
+    const pos = getLatestPositions().get(mmsi)!;
     expect(pos.heading).toBe(135);
   });
 
   it('falls back to Cog (rounded) when TrueHeading === 511', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi, { trueHeading: 511, cog: 270.7 }));
-    const pos = proxy.getLatestPositions().get(mmsi)!;
+    const pos = getLatestPositions().get(mmsi)!;
     // Math.round(270.7) % 360 = 271
     expect(pos.heading).toBe(271);
   });
@@ -197,7 +223,7 @@ describe('AISProxy', () => {
   it('falls back to Cog 0 when TrueHeading === 511 and Cog is 0', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi, { trueHeading: 511, cog: 0 }));
-    const pos = proxy.getLatestPositions().get(mmsi)!;
+    const pos = getLatestPositions().get(mmsi)!;
     expect(pos.heading).toBe(0);
   });
 
@@ -205,7 +231,7 @@ describe('AISProxy', () => {
     const mmsi: ValidMMSI = 316045069;
     // Cog = 361 → Math.round(361) % 360 = 1
     emitMessage(makeRawMessage(mmsi, { trueHeading: 511, cog: 361 }));
-    const pos = proxy.getLatestPositions().get(mmsi)!;
+    const pos = getLatestPositions().get(mmsi)!;
     expect(pos.heading).toBe(1);
   });
 
@@ -214,7 +240,7 @@ describe('AISProxy', () => {
   it('fires registered position listeners when a valid position is received', () => {
     const mmsi: ValidMMSI = 316045082;
     const listener = vi.fn();
-    proxy.onPosition(listener);
+    onPosition(listener);
     emitMessage(makeRawMessage(mmsi));
     expect(listener).toHaveBeenCalledOnce();
     expect(listener.mock.calls[0][0].mmsi).toBe(mmsi);
@@ -222,7 +248,7 @@ describe('AISProxy', () => {
 
   it('does not fire listeners for unknown MMSIs', () => {
     const listener = vi.fn();
-    proxy.onPosition(listener);
+    onPosition(listener);
     emitMessage(makeRawMessage(999999999));
     expect(listener).not.toHaveBeenCalled();
   });
@@ -230,7 +256,7 @@ describe('AISProxy', () => {
   it('unsubscribe function removes the listener', () => {
     const mmsi: ValidMMSI = 316045081;
     const listener = vi.fn();
-    const unsubscribe = proxy.onPosition(listener);
+    const unsubscribe = onPosition(listener);
     unsubscribe();
     emitMessage(makeRawMessage(mmsi));
     expect(listener).not.toHaveBeenCalled();
@@ -245,7 +271,7 @@ describe('AISProxy', () => {
       Message: {},
     });
     emitMessage(raw);
-    expect(proxy.getLatestPositions().size).toBe(0);
+    expect(getLatestPositions().size).toBe(0);
   });
 
   // ── Malformed messages ────────────────────────────────────────────────────
@@ -261,7 +287,7 @@ describe('AISProxy', () => {
       Message: {},
     });
     expect(() => emitMessage(raw)).not.toThrow();
-    expect(proxy.getLatestPositions().size).toBe(0);
+    expect(getLatestPositions().size).toBe(0);
   });
 
   // ── getLatestPositions returns a snapshot ─────────────────────────────────
@@ -269,9 +295,9 @@ describe('AISProxy', () => {
   it('getLatestPositions() returns a copy — mutating it does not affect proxy state', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi));
-    const snapshot = proxy.getLatestPositions();
+    const snapshot = getLatestPositions();
     snapshot.clear();
-    expect(proxy.getLatestPositions().size).toBe(1);
+    expect(getLatestPositions().size).toBe(1);
   });
 
   // ── timestamp parsing ─────────────────────────────────────────────────────
@@ -279,7 +305,7 @@ describe('AISProxy', () => {
   it('stores timestamp as a valid ISO 8601 string', () => {
     const mmsi: ValidMMSI = 316045069;
     emitMessage(makeRawMessage(mmsi));
-    const pos = proxy.getLatestPositions().get(mmsi)!;
+    const pos = getLatestPositions().get(mmsi)!;
     expect(() => new Date(pos.timestamp)).not.toThrow();
     expect(new Date(pos.timestamp).toISOString()).toBe(pos.timestamp);
   });
@@ -305,6 +331,6 @@ describe('AISProxy', () => {
       },
     });
     emitMessage(raw);
-    expect(proxy.getLatestPositions().get(mmsi)!.name).toBe('SAM MCBRIDE');
+    expect(getLatestPositions().get(mmsi)!.name).toBe('SAM MCBRIDE');
   });
 });

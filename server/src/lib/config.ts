@@ -43,10 +43,38 @@ interface Config {
    * the CloudFront frontend URL via a Fly.io secret.
    */
   corsOrigin: string;
+  /** aprs.fi API key — optional fallback provider. */
+  aprsfiApiKey: string | null;
+  /** VesselAPI.com API key — optional last-resort fallback provider. */
+  vesselApiKey: string | null;
+  /**
+   * Ordered list of provider names to use.
+   * Comma-separated string from AIS_PROVIDER_ORDER env var.
+   * Defaults to 'aisstream'.
+   */
+  aisProviderOrder: string[];
+  /**
+   * Milliseconds of silence before the manager triggers a failover.
+   * Defaults to 5 minutes (300 000 ms).
+   */
+  aisSilenceTimeoutMs: number;
+  /**
+   * Polling interval for REST-based providers (aprsfi, vesselapi).
+   * Defaults to 30 000 ms (30 seconds).
+   */
+  aisPollingIntervalMs: number;
 }
 
 export const config: Config = {
   port: optionalEnvNumber('PORT', 3001),
   aisstreamApiKey: requireEnv('AISSTREAM_API_KEY'),
   corsOrigin: optionalEnv('CORS_ORIGIN', 'http://localhost:5173'),
+  aprsfiApiKey: process.env['APRSFI_API_KEY'] ?? null,
+  vesselApiKey: process.env['VESSEL_API_KEY'] ?? null,
+  aisProviderOrder: optionalEnv('AIS_PROVIDER_ORDER', 'aisstream')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0),
+  aisSilenceTimeoutMs: optionalEnvNumber('AIS_SILENCE_TIMEOUT_MS', 5 * 60 * 1_000),
+  aisPollingIntervalMs: optionalEnvNumber('AIS_POLLING_INTERVAL_MS', 30_000),
 };
