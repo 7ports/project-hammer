@@ -110,6 +110,10 @@ function RouteRow({ routeId, label }: RouteRowProps) {
     );
   }
 
+  const nextInbound = (routeInSeason && (state === 'operating' || state === 'unknown'))
+    ? upcomingDepartures(routeId, 'inbound', 1)
+    : [];
+
   return (
     <div className="schedule-route">
       <div className="schedule-route__header">
@@ -123,22 +127,42 @@ function RouteRow({ routeId, label }: RouteRowProps) {
       </div>
 
       {state === 'operating' || state === 'unknown' ? (
-        <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
-          {next4.length === 0 ? (
-            <p className="schedule-route__notice">No more departures today</p>
-          ) : (
-            next4.map((dep, i) => (
-              <div key={`${dep.time}-${i}`} className="schedule-route__departure">
-                <span className="schedule-route__time">{dep.time}</span>
-                {i === 0 && countdown && (
-                  <span className="schedule-route__countdown" aria-live="polite">
-                    in {countdown}
-                  </span>
-                )}
-              </div>
-            ))
+        <>
+          <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
+            {next4.length === 0 ? (
+              <p className="schedule-route__notice">No more departures today</p>
+            ) : (
+              next4.map((dep, i) => (
+                <div
+                  key={`${dep.time}-${i}`}
+                  className={`schedule-route__departure${i === 0 ? ' schedule-route__departure--next' : ''}`}
+                >
+                  {i === 0 && <span className="schedule-route__next-pill">NEXT</span>}
+                  <span className="schedule-route__time">{dep.time}</span>
+                  {i === 0 && countdown && (
+                    <span className="schedule-route__countdown" aria-live="polite">
+                      in {countdown}
+                    </span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {routeInSeason && (
+            <div
+              className="schedule-route__arrival"
+              aria-label={`Next arrival at Jack Layton for ${label}`}
+            >
+              <span className="schedule-route__arrival-label">↓ Next arrival</span>
+              {nextInbound.length > 0 ? (
+                <span className="schedule-route__arrival-time">{nextInbound[0].time}</span>
+              ) : (
+                <span className="schedule-route__arrival-none">No more arrivals today</span>
+              )}
+            </div>
           )}
-        </div>
+        </>
       ) : (
         <p
           className={`schedule-route__notice${state === 'disrupted' ? ' schedule-route__notice--disrupted' : ''}`}

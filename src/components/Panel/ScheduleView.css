@@ -162,6 +162,74 @@
   flex: 1 1 auto;
 }
 
+/* Next departure highlight */
+.schedule-route__departure--next {
+  border-left: 2px solid var(--accent-cyan);
+  padding-left: var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+  background: rgba(0, 229, 255, 0.06);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.schedule-route__departure--next .schedule-route__time {
+  font-size: var(--text-base);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+
+/* "NEXT" pill label */
+.schedule-route__next-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ocean-deep);
+  background: var(--accent-cyan);
+  flex: 0 0 auto;
+  line-height: 1.6;
+}
+
+/* Next arrival row */
+.schedule-route__arrival {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  border-top: 1px solid var(--glass-border);
+  padding-top: var(--space-2);
+  min-height: 28px;
+}
+
+.schedule-route__arrival-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  flex: 1 1 auto;
+}
+
+.schedule-route__arrival-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  flex: 0 0 auto;
+}
+
+.schedule-route__arrival-none {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  flex: 0 0 auto;
+}
+
 /* Advisory / closure notice */
 .schedule-route__notice {
   font-family: var(--font-sans);
