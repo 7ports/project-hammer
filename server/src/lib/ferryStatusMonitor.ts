@@ -146,6 +146,18 @@ export class FerryStatusMonitor {
       }
 
       const data = (await upstream.json()) as CityFerryResponse;
+
+      if (!Array.isArray(data.assets)) {
+        log('warn', 'city_api_null_assets', { raw_type: typeof data.assets });
+        this._handlePollResult({
+          status: 'unknown',
+          message: 'City of Toronto ferry API returned no data',
+          reason: null,
+          postedAt: null,
+        });
+        return;
+      }
+
       const asset = data.assets.find(a => a.LocationID === FERRY_LOCATION_ID);
 
       const status: FerryStatusEvent['status'] = asset ? mapStatusCode(asset.Status) : 'unknown';
