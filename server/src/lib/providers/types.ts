@@ -23,6 +23,8 @@ export interface IAISProvider {
   readonly name: string;
   start(onData: (pos: VesselPosition) => void): void;
   stop(): void;
+  pause?(): void;
+  resume?(): void;
   getStatus(): ProviderStatus;
   getDiagnostics(): ProviderDiagnostics;
 }

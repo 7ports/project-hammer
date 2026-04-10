@@ -38,6 +38,7 @@ export class AISProviderManager {
   private silenceTimer: ReturnType<typeof setTimeout> | null = null;
   private failoverCooldownTimer: ReturnType<typeof setTimeout> | null = null;
   private failoverInProgress = false;
+  private _activeClients = 0;
 
   // Canonical position store
   private readonly positions = new Map<number, VesselPosition>();
@@ -106,6 +107,32 @@ export class AISProviderManager {
       failoverCount: this._failoverCount,
       lastFailoverAt: this._lastFailoverAt?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Call when an SSE client connects. Resumes polling if this is the first client.
+   */
+  clientConnected(): void {
+    this._activeClients++;
+    if (this._activeClients === 1) {
+      const provider = this.providers[this.activeIndex];
+      if (provider?.resume) {
+        provider.resume();
+      }
+    }
+  }
+
+  /**
+   * Call when an SSE client disconnects. Pauses polling when no clients remain.
+   */
+  clientDisconnected(): void {
+    this._activeClients = Math.max(0, this._activeClients - 1);
+    if (this._activeClients === 0) {
+      const provider = this.providers[this.activeIndex];
+      if (provider?.pause) {
+        provider.pause();
+      }
+    }
   }
 
   /**

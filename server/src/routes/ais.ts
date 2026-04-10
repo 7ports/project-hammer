@@ -26,6 +26,8 @@ aisRouter.get('/', (req: Request, res: Response) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  aisProxy.clientConnected();
+
   // -------------------------------------------------------------------------
   // Flush current positions immediately
   // -------------------------------------------------------------------------
@@ -54,5 +56,6 @@ aisRouter.get('/', (req: Request, res: Response) => {
   req.on('close', () => {
     unsubscribe();
     clearInterval(keepAliveTimer);
+    aisProxy.clientDisconnected();
   });
 });

@@ -62,6 +62,7 @@ export class AprsfiProvider implements IAISProvider {
   private onDataCallback: ((pos: VesselPosition) => void) | null = null;
   private consecutiveErrors = 0;
   private firstPollDone = false;
+  private _paused = false;
 
   // Diagnostics
   private _status: ProviderStatus = 'idle';
@@ -95,12 +96,34 @@ export class AprsfiProvider implements IAISProvider {
 
   stop(): void {
     this._status = 'stopped';
+    this._paused = false;
     this.onDataCallback = null;
 
     if (this.intervalHandle !== null) {
       clearInterval(this.intervalHandle);
       this.intervalHandle = null;
     }
+  }
+
+  pause(): void {
+    if (this._paused || this._status === 'stopped') return;
+    this._paused = true;
+    if (this.intervalHandle !== null) {
+      clearInterval(this.intervalHandle);
+      this.intervalHandle = null;
+    }
+    console.log('[AprsfiProvider] Polling paused (no clients connected)');
+  }
+
+  resume(): void {
+    if (!this._paused || this._status === 'stopped') return;
+    this._paused = false;
+    console.log('[AprsfiProvider] Polling resumed (client connected)');
+    // Poll immediately then restart the interval.
+    void this._poll();
+    this.intervalHandle = setInterval(() => {
+      void this._poll();
+    }, this.pollingIntervalMs);
   }
 
   getStatus(): ProviderStatus {
@@ -124,14 +147,18 @@ export class AprsfiProvider implements IAISProvider {
   // -------------------------------------------------------------------------
 
   private async _poll(): Promise<void> {
-    if (this._status === 'stopped') return;
+    if (this._status === 'stopped' || this._paused) return;
 
     const mmsiList = VESSEL_MMSIS.join(',');
     const url =
       `${APRSFI_API_BASE}?name=${mmsiList}&what=loc&apikey=${this.apiKey}&format=json`;
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'toronto-ferry-tracker/1.0 (+https://ferries.yyz.live)',
+        },
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
