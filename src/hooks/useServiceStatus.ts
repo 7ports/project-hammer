@@ -17,16 +17,6 @@ const ROUTE_IDS: RouteId[] = [
   'jack-layton-hanlans',
 ];
 
-function isSeasonallyClosed(routeId: RouteId): boolean {
-  if (routeId !== 'jack-layton-centre') return false;
-  const now = new Date();
-  const month = now.getMonth() + 1; // 1-12
-  const day = now.getDate();
-  const afterSeasonEnd = month > 10 || (month === 10 && day > 15);
-  const beforeSeasonStart = month < 4 || (month === 4 && day < 15);
-  return afterSeasonEnd || beforeSeasonStart;
-}
-
 function mapDisruptionType(reason: string | null): DisruptionType {
   if (!reason) return 'other';
   const r = reason.toLowerCase();
@@ -38,15 +28,6 @@ function mapDisruptionType(reason: string | null): DisruptionType {
 
 function buildRouteStatuses(ferry: FerryStatusResponse | null): RouteStatus[] {
   return ROUTE_IDS.map((routeId): RouteStatus => {
-    if (isSeasonallyClosed(routeId)) {
-      return {
-        routeId,
-        status: 'seasonal-closure',
-        message: 'Seasonal — service resumes April 15',
-        disruptionType: null,
-      };
-    }
-
     if (!ferry || ferry.status === 'unknown') {
       return { routeId, status: 'unknown', message: null, disruptionType: null };
     }

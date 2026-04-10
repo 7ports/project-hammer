@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { ScheduleData, ScheduleSeason, Departure, RouteId, DayOfWeek } from '../types/schedule';
+import type { ScheduleData, ScheduleSeason, Departure, RouteId, DayOfWeek, RouteSchedule } from '../types/schedule';
 
 export interface UseScheduleResult {
   schedule: ScheduleData | null;
@@ -11,6 +11,13 @@ export interface UseScheduleResult {
 }
 
 const DAY_NAMES: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+function isRouteActive(route: RouteSchedule, today: string): boolean {
+  if (!route.seasonal) return true;
+  if (route.seasonStart !== null && route.seasonStart > today) return false;
+  if (route.seasonEnd !== null && route.seasonEnd < today) return false;
+  return true;
+}
 
 /**
  * Find the active season for a given date (YYYY-MM-DD string).
@@ -42,8 +49,9 @@ function getUpcoming(
 ): Departure[] {
   if (!activeSeason) return [];
 
+  const today = new Date().toISOString().slice(0, 10);
   const route = activeSeason.routes.find(r => r.routeId === routeId);
-  if (!route) return [];
+  if (!route || !isRouteActive(route, today)) return [];
 
   const now = new Date();
   const todayDay = DAY_NAMES[now.getDay()];
@@ -96,15 +104,16 @@ export function useSchedule(): UseScheduleResult {
     return () => { cancelled = true; };
   }, []);
 
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
   const activeSeason = useMemo((): ScheduleSeason | null => {
     if (!schedule) return null;
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     return findActiveSeason(schedule, today);
-  }, [schedule]);
+  }, [schedule, today]);
 
   const routes = useMemo(
-    () => activeSeason?.routes ?? [],
-    [activeSeason],
+    () => (activeSeason?.routes ?? []).filter(r => isRouteActive(r, today)),
+    [activeSeason, today],
   );
 
   const upcomingDepartures = useMemo(

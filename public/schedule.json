@@ -142,8 +142,8 @@
         {
           "routeId": "jack-layton-centre",
           "name": "Centre Island",
-          "seasonal": false,
-          "seasonStart": null,
+          "seasonal": true,
+          "seasonStart": "2026-04-15",
           "seasonEnd": null,
           "departures": [
             { "direction": "outbound", "time": "07:45", "days": ["mon","tue","wed","thu","fri","sat","sun"] },
