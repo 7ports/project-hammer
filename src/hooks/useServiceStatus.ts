@@ -99,6 +99,12 @@ export function useServiceStatus(): ServiceStatusResult {
     outageMessage: ferryData?.status !== 'open' ? (ferryData?.message ?? null) : null,
     outageReason: ferryData?.status !== 'open' ? (ferryData?.reason ?? null) : null,
     outagePostedAt: ferryData?.status !== 'open' ? (ferryData?.postedAt ?? null) : null,
-    outageHistory: history.map(({ history: _h, ...rest }) => rest),
+    outageHistory: history.map((e) => ({
+      status: e.status,
+      reason: e.reason,
+      message: e.message,
+      postedAt: e.postedAt,
+      detectedAt: e.detectedAt,
+    })),
   };
 }
