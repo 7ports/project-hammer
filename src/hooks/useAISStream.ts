@@ -56,8 +56,8 @@ export function useAISStream(): AISStreamResult {
     };
 
     es.onopen = () => {
-      // Stay in current status — the first message will set 'connected'
       clearReconnectTimer();
+      setConnectionStatus('connected');
       resetOfflineTimer();
     };
 
