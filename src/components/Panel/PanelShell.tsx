@@ -158,6 +158,18 @@ export function PanelShell({ vessel }: PanelShellProps) {
       <div className="panel-shell__section">
         <TicketCard />
       </div>
+
+      <div className="panel-shell__attribution">
+        AIS fallback data:{' '}
+        <a
+          href="https://aprs.fi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="panel-shell__attribution-link"
+        >
+          aprs.fi
+        </a>
+      </div>
     </>
   );
 

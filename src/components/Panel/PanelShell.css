@@ -390,3 +390,31 @@
     transition: none;
   }
 }
+
+/* ============================================================
+   aprs.fi attribution — mandatory credit per API terms
+   ============================================================ */
+
+.panel-shell__attribution {
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  border-top: 1px solid var(--glass-border);
+  text-align: center;
+}
+
+.panel-shell__attribution-link {
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.panel-shell__attribution-link:hover {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.panel-shell__attribution-link:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

@@ -4,7 +4,7 @@ import type { Vessel } from '../types/vessel';
 import type { VesselPosition } from '../types/ais';
 import type { DockLocation } from '../lib/docks';
 import { useAISStream } from './useAISStream';
-import type { ConnectionStatus } from './useAISStream';
+import type { ConnectionStatus, ProviderStatus } from './useAISStream';
 import { useAnimationFrame } from './useAnimationFrame';
 import { useSchedule } from './useSchedule';
 import { lerpPosition, smoothstep } from '../lib/interpolation';
@@ -42,11 +42,12 @@ export interface VesselPositionsResult {
   vessels: Vessel[];
   vesselPositionsRef: RefObject<Vessel[]>;
   connectionStatus: ConnectionStatus;
+  providerStatus: ProviderStatus;
   positionHistory: Map<number, VesselPosition[]>;
 }
 
 export function useVesselPositions(): VesselPositionsResult {
-  const { vessels: rawVessels, connectionStatus } = useAISStream();
+  const { vessels: rawVessels, connectionStatus, providerStatus } = useAISStream();
   const { upcomingDepartures } = useSchedule();
 
   // Keep upcomingDepartures accessible inside the rAF closure without a stale reference
@@ -205,5 +206,5 @@ export function useVesselPositions(): VesselPositionsResult {
     }
   });
 
-  return { vessels: interpolated, vesselPositionsRef: interpolatedRef, connectionStatus, positionHistory };
+  return { vessels: interpolated, vesselPositionsRef: interpolatedRef, connectionStatus, providerStatus, positionHistory };
 }

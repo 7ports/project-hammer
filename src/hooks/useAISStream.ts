@@ -3,6 +3,7 @@ import type { VesselPosition } from '../types/ais';
 import { config } from '../lib/config';
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'offline';
+export type ProviderStatus = 'ok' | 'all-down';
 
 const LS_KEY = 'ferry_vessel_cache_v1';
 
@@ -28,11 +29,13 @@ function saveVesselsToCache(vessels: Map<number, VesselPosition>): void {
 export interface AISStreamResult {
   vessels: Map<number, VesselPosition>;
   connectionStatus: ConnectionStatus;
+  providerStatus: ProviderStatus;
 }
 
 export function useAISStream(): AISStreamResult {
   const [vessels, setVessels] = useState<Map<number, VesselPosition>>(() => loadCachedVessels());
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('reconnecting');
+  const [providerStatus, setProviderStatus] = useState<ProviderStatus>('ok');
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Debounce onerror: only surface 'reconnecting' if the error persists beyond 3s
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,6 +70,8 @@ export function useAISStream(): AISStreamResult {
         // Message received — connection is healthy; cancel any pending reconnect surfacing
         clearReconnectTimer();
         setConnectionStatus('connected');
+        // A live position confirms providers are up — recover if providers-up event was missed
+        setProviderStatus('ok');
         resetOfflineTimer();
         setVessels(prev => {
           const next = new Map(prev);
@@ -78,6 +83,19 @@ export function useAISStream(): AISStreamResult {
         // malformed message — ignore
       }
     };
+
+    es.addEventListener('status', (e: MessageEvent) => {
+      try {
+        const payload = JSON.parse(e.data as string) as { type: string };
+        if (payload.type === 'providers-down') {
+          setProviderStatus('all-down');
+        } else if (payload.type === 'providers-up') {
+          setProviderStatus('ok');
+        }
+      } catch {
+        // ignore malformed status events
+      }
+    });
 
     es.onerror = () => {
       // Only surface 'reconnecting' if the error persists beyond 3s.
@@ -96,5 +114,5 @@ export function useAISStream(): AISStreamResult {
     };
   }, []); // empty deps — single connection for component lifetime
 
-  return { vessels, connectionStatus };
+  return { vessels, connectionStatus, providerStatus };
 }

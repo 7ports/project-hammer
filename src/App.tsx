@@ -19,7 +19,7 @@ const initialMmsi = (() => {
 })();
 
 function AppContent() {
-  const { vessels, vesselPositionsRef, connectionStatus, positionHistory } = useVesselPositions();
+  const { vessels, vesselPositionsRef, connectionStatus, providerStatus, positionHistory } = useVesselPositions();
   const [selectedMmsi, setSelectedMmsi] = useState<number | null>(initialMmsi);
   const selectedVessel = vessels.find(v => v.mmsi === selectedMmsi) ?? null;
 
@@ -36,6 +36,7 @@ function AppContent() {
 
   return (
     <AppShell
+      providerStatus={providerStatus}
       mapSlot={
         <MapErrorBoundary>
           <FerryMap>

@@ -8,7 +8,7 @@
   width: 100%;
   height: 100dvh; /* dvh: respects mobile browser chrome */
   display: grid;
-  grid-template-rows: 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-columns: 1fr;
   position: relative;
   overflow: hidden;
@@ -31,12 +31,18 @@
     grid-template-columns: 1fr;
   }
 
+  .outage-banner {
+    grid-column: 1 / -1; /* span across map + panel columns */
+  }
+
   .app-shell__map {
     grid-column: 1;
+    grid-row: 2;
   }
 
   .app-shell__panel {
     grid-column: 2;
+    grid-row: 2;
     background: var(--glass-bg);
     border-left: 1px solid var(--glass-border);
     -webkit-backdrop-filter: var(--glass-blur);
@@ -104,11 +110,12 @@
   }
 }
 
-/* Map slot — fills its grid cell */
+/* Map slot — fills its grid cell (row 2, banner occupies row 1) */
 .app-shell__map {
   position: relative;
   width: 100%;
   height: 100%;
+  grid-row: 2;
 }
 
 /* Overlay slot — top-right corner, above the map */
@@ -225,4 +232,31 @@
 .about-btn:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
+}
+
+/* ============================================================
+   Outage banner — spans full width above the map when all AIS
+   providers are unavailable. Non-dismissible, amber warning style.
+   ============================================================ */
+
+.outage-banner {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: 10px var(--space-4, 16px);
+  background: rgba(234, 179, 8, 0.15);
+  border-left: 3px solid #eab308;
+  color: #fde68a;
+  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-sans, sans-serif);
+  line-height: 1.4;
+  z-index: 100;
+  /* Sit above safe-area top padding that AppShell applies */
+}
+
+.outage-banner__icon {
+  font-size: 1rem;
+  flex-shrink: 0;
 }

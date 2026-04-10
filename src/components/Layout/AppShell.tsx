@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { ProviderStatus } from '../../hooks/useAISStream';
 import { NextDeparture } from '../Map/NextDeparture';
 import { AboutPanel } from '../UI/AboutPanel';
 import './AppShell.css';
@@ -11,9 +12,11 @@ interface AppShellProps {
   overlaySlot?: ReactNode;
   /** Right panel — hidden on mobile, 360px column on desktop */
   panelSlot?: ReactNode;
+  /** AIS provider availability — shows outage banner when 'all-down' */
+  providerStatus?: ProviderStatus;
 }
 
-export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
+export function AppShell({ mapSlot, overlaySlot, panelSlot, providerStatus = 'ok' }: AppShellProps) {
   const [isPanelOpen, setPanelOpen] = useState(true);
   const [isAboutOpen, setAboutOpen] = useState(false);
   const aboutBtnRef = useRef<HTMLButtonElement>(null);
@@ -25,6 +28,12 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot }: AppShellProps) {
 
   return (
     <div className={`app-shell${!isPanelOpen ? ' app-shell--panel-collapsed' : ''}`}>
+      {providerStatus === 'all-down' && (
+        <div className="outage-banner" role="alert" aria-live="assertive">
+          <span className="outage-banner__icon" aria-hidden="true">&#9888;</span>
+          All vessel data sources are currently unavailable. Ferry positions shown may be outdated.
+        </div>
+      )}
       <div className="app-shell__map">
         {mapSlot}
         <NextDeparture />
