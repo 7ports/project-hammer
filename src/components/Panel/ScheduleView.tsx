@@ -68,6 +68,9 @@ function RouteRow({ routeId, label }: RouteRowProps) {
   const firstTime = next4[0]?.time ?? null;
   const countdown = useCountdown(firstTime);
 
+  const isScheduleInferred = state === 'unknown' && next4.length > 0;
+  const effectiveState: ServiceState = isScheduleInferred ? 'operating' : state;
+
   if (loading) {
     return (
       <div className="schedule-route" aria-busy="true">
@@ -110,7 +113,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
     );
   }
 
-  const nextInbound = (routeInSeason && (state === 'operating' || state === 'unknown'))
+  const nextInbound = (routeInSeason && (effectiveState === 'operating' || effectiveState === 'unknown'))
     ? upcomingDepartures(routeId, 'inbound', 1)
     : [];
 
@@ -119,14 +122,15 @@ function RouteRow({ routeId, label }: RouteRowProps) {
       <div className="schedule-route__header">
         <span className="schedule-route__name">{label}</span>
         <span
-          className={`schedule-route__status ${STATUS_CSS_CLASS[state]}`}
-          aria-label={`${label}: ${STATUS_LABELS[state]}`}
+          className={`schedule-route__status ${STATUS_CSS_CLASS[effectiveState]}`}
+          aria-label={`${label}: ${STATUS_LABELS[effectiveState]}`}
+          title={isScheduleInferred ? 'Based on published schedule — live status unavailable' : undefined}
         >
-          {STATUS_LABELS[state]}
+          {STATUS_LABELS[effectiveState]}
         </span>
       </div>
 
-      {state === 'operating' || state === 'unknown' ? (
+      {effectiveState === 'operating' || effectiveState === 'unknown' ? (
         <>
           <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
             {next4.length === 0 ? (
