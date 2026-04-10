@@ -57,13 +57,13 @@ interface RouteRowProps {
 }
 
 function RouteRow({ routeId, label }: RouteRowProps) {
-  const { loading, error, upcomingDepartures, activeSeason } = useSchedule();
+  const { loading, error, upcomingDepartures, routes: activeRoutes } = useSchedule();
   const { routes } = useServiceStatus();
   const routeStatus = routes.find(r => r.routeId === routeId);
   const state = routeStatus?.status ?? 'unknown';
 
-  // Only show departures for routes that exist in the active season
-  const routeInSeason = activeSeason?.routes.some(r => r.routeId === routeId) ?? false;
+  // Only show departures for routes active in the current season (respects seasonStart/seasonEnd)
+  const routeInSeason = activeRoutes.some(r => r.routeId === routeId);
   const next4 = routeInSeason ? upcomingDepartures(routeId, 'outbound', 4) : [];
   const firstTime = next4[0]?.time ?? null;
   const countdown = useCountdown(firstTime);
