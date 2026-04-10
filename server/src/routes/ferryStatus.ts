@@ -1,45 +1,18 @@
 /**
- * Proxy route for the City of Toronto live ferry service status.
+ * Ferry service status routes.
  *
- * Upstream: https://www.toronto.ca/data/parks/live/ferry.json
- * Mounted at /api/ferry-status in index.ts
+ * GET /          — REST snapshot of current status (served from monitor cache)
+ * GET /stream    — SSE stream; pushes event: ferry-status whenever status changes
  *
- * The City endpoint lacks CORS headers, so the browser cannot call it
- * directly. This handler fetches it server-side, extracts the Jack Layton
- * Ferry Terminal asset (LocationID 3789), normalises the response to a
- * typed FerryStatusResponse, and caches the result for 60 seconds.
- *
- * Status codes from the City:
- *   0 = closed
- *   1 = open
- *   2 = alert / disruption
+ * Mounted at /api/ferry-status in index.ts.
+ * Polling of the upstream City API is handled by FerryStatusMonitor (started
+ * in index.ts) — this route never fetches the City API directly.
  */
 
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-
-const FERRY_STATUS_URL = 'https://www.toronto.ca/data/parks/live/ferry.json';
-const FERRY_LOCATION_ID = 3789;
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface CityAsset {
-  LocationID: number;
-  AssetID: number;
-  PostedDate: string;
-  AssetName: string;
-  SeasonStart: string | null;
-  SeasonEnd: string | null;
-  Reason: string | null;
-  Comments: string | null;
-  Status: number;
-}
-
-interface CityFerryResponse {
-  assets: CityAsset[];
-}
+import { ferryStatusMonitor } from '../lib/ferryStatusMonitor';
+import type { FerryStatusEvent } from '../lib/ferryStatusMonitor';
 
 export interface FerryStatusResponse {
   status: 'open' | 'alert' | 'closed' | 'unknown';
@@ -47,86 +20,76 @@ export interface FerryStatusResponse {
   message: string | null;
   postedAt: string | null;
   source: 'live' | 'error';
+  history: FerryStatusEvent[];
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, '').trim();
-}
-
-function mapStatus(code: number): FerryStatusResponse['status'] {
-  if (code === 0) return 'closed';
-  if (code === 1) return 'open';
-  if (code === 2) return 'alert';
-  return 'unknown';
-}
-
-// ---------------------------------------------------------------------------
-// Router
-// ---------------------------------------------------------------------------
+const KEEP_ALIVE_INTERVAL_MS = 30_000;
 
 const router = Router();
 
-router.get('/', async (_req: Request, res: Response) => {
-  try {
-    const upstream = await fetch(FERRY_STATUS_URL, {
-      headers: { 'User-Agent': 'toronto-ferry-tracker/2.0' },
-      signal: AbortSignal.timeout(8000),
-    });
+// ---------------------------------------------------------------------------
+// REST — current status snapshot
+// ---------------------------------------------------------------------------
 
-    if (!upstream.ok) {
-      throw new Error(`Upstream returned ${upstream.status}`);
-    }
+router.get('/', (_req: Request, res: Response) => {
+  const current = ferryStatusMonitor.getCurrentStatus();
 
-    const data = (await upstream.json()) as CityFerryResponse;
-    const asset = data.assets.find(a => a.LocationID === FERRY_LOCATION_ID);
-
-    if (!asset) {
-      const response: FerryStatusResponse = {
-        status: 'unknown',
-        reason: null,
-        message: null,
-        postedAt: null,
-        source: 'live',
-      };
-      res.json(response);
-      return;
-    }
-
-    // Parse PostedDate as Eastern Standard Time (UTC-5).
-    // The City API returns a naive datetime string ("2026-04-03 20:57:57")
-    // with no timezone indicator — it is always Eastern Time.
-    const postedAt = asset.PostedDate
-      ? new Date(asset.PostedDate.replace(' ', 'T') + '-05:00').toISOString()
-      : null;
-
-    const response: FerryStatusResponse = {
-      status: mapStatus(asset.Status),
-      reason: asset.Reason ?? null,
-      message: asset.Comments ? stripHtml(asset.Comments) : null,
-      postedAt,
-      source: 'live',
-    };
-
-    // Cache for 60 seconds — status changes infrequently
-    res.set('Cache-Control', 'public, max-age=60');
-    res.json(response);
-  } catch (err) {
-    console.error('[ferry-status] upstream fetch failed:', err);
-    // Always return 200 — the client inspects `source: 'error'` to decide
-    // whether to show a degraded UI rather than treating this as a hard failure.
+  if (!current) {
     const fallback: FerryStatusResponse = {
       status: 'unknown',
       reason: null,
       message: null,
       postedAt: null,
       source: 'error',
+      history: [],
     };
-    res.status(200).json(fallback);
+    res.json(fallback);
+    return;
   }
+
+  const response: FerryStatusResponse = {
+    status: current.status,
+    reason: current.reason,
+    message: current.message,
+    postedAt: current.postedAt,
+    source: 'live',
+    history: ferryStatusMonitor.getHistory(),
+  };
+
+  res.set('Cache-Control', 'public, max-age=30');
+  res.json(response);
+});
+
+// ---------------------------------------------------------------------------
+// SSE — live status stream
+// ---------------------------------------------------------------------------
+
+router.get('/stream', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Send current status immediately on connect so the client doesn't wait
+  const current = ferryStatusMonitor.getCurrentStatus();
+  if (current) {
+    const payload = { ...current, history: ferryStatusMonitor.getHistory() };
+    res.write(`event: ferry-status\ndata: ${JSON.stringify(payload)}\n\n`);
+  }
+
+  // Forward future status changes
+  const unsubscribe = ferryStatusMonitor.onStatusChange((event) => {
+    const payload = { ...event, history: ferryStatusMonitor.getHistory() };
+    res.write(`event: ferry-status\ndata: ${JSON.stringify(payload)}\n\n`);
+  });
+
+  // Keep-alive
+  const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), KEEP_ALIVE_INTERVAL_MS);
+
+  req.on('close', () => {
+    unsubscribe();
+    clearInterval(keepAlive);
+  });
 });
 
 export default router;

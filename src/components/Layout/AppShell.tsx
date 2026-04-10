@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ProviderStatus } from '../../hooks/useAISStream';
+import { useServiceStatus } from '../../hooks/useServiceStatus';
 import { NextDeparture } from '../Map/NextDeparture';
 import { AboutPanel } from '../UI/AboutPanel';
+import { OutageBanner } from '../UI/OutageBanner';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -20,6 +22,7 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot, providerStatus = 'ok
   const [isPanelOpen, setPanelOpen] = useState(true);
   const [isAboutOpen, setAboutOpen] = useState(false);
   const aboutBtnRef = useRef<HTMLButtonElement>(null);
+  const { ferryStatus, outageMessage, outageReason, outagePostedAt, outageHistory } = useServiceStatus();
 
   function handleAboutClose() {
     setAboutOpen(false);
@@ -28,6 +31,13 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot, providerStatus = 'ok
 
   return (
     <div className={`app-shell${!isPanelOpen ? ' app-shell--panel-collapsed' : ''}`}>
+      <OutageBanner
+        status={ferryStatus}
+        message={outageMessage}
+        reason={outageReason}
+        postedAt={outagePostedAt}
+        history={outageHistory}
+      />
       {providerStatus === 'all-down' && (
         <div className="outage-banner" role="alert" aria-live="assertive">
           <span className="outage-banner__icon" aria-hidden="true">&#9888;</span>

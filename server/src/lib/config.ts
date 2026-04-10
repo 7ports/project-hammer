@@ -63,6 +63,11 @@ interface Config {
    * Defaults to 30 000 ms (30 seconds).
    */
   aisPollingIntervalMs: number;
+  /**
+   * How often the FerryStatusMonitor polls the City ferry status API.
+   * Defaults to 30 000 ms (30 seconds).
+   */
+  ferryStatusPollMs: number;
 }
 
 export const config: Config = {
@@ -77,4 +82,5 @@ export const config: Config = {
     .filter((s) => s.length > 0),
   aisSilenceTimeoutMs: optionalEnvNumber('AIS_SILENCE_TIMEOUT_MS', 5 * 60 * 1_000),
   aisPollingIntervalMs: optionalEnvNumber('AIS_POLLING_INTERVAL_MS', 30_000),
+  ferryStatusPollMs: optionalEnvNumber('FERRY_STATUS_POLL_MS', 30_000),
 };

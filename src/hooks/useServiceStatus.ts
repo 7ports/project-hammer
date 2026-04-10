@@ -3,12 +3,13 @@ import type { ServiceStatus, RouteStatus, DisruptionType } from '../types/servic
 import type { RouteId } from '../types/schedule';
 import { config } from '../lib/config';
 
-interface FerryStatusResponse {
+interface FerryStatusEvent {
   status: 'open' | 'alert' | 'closed' | 'unknown';
   reason: string | null;
   message: string | null;
   postedAt: string | null;
-  source: 'live' | 'error';
+  detectedAt: string;
+  history?: FerryStatusEvent[];
 }
 
 const ROUTE_IDS: RouteId[] = [
@@ -26,7 +27,7 @@ function mapDisruptionType(reason: string | null): DisruptionType {
   return 'other';
 }
 
-function buildRouteStatuses(ferry: FerryStatusResponse | null): RouteStatus[] {
+function buildRouteStatuses(ferry: FerryStatusEvent | null): RouteStatus[] {
   return ROUTE_IDS.map((routeId): RouteStatus => {
     if (!ferry || ferry.status === 'unknown') {
       return { routeId, status: 'unknown', message: null, disruptionType: null };
@@ -46,29 +47,58 @@ function buildRouteStatuses(ferry: FerryStatusResponse | null): RouteStatus[] {
   });
 }
 
-export function useServiceStatus(): ServiceStatus {
-  const [ferryData, setFerryData] = useState<FerryStatusResponse | null>(null);
+export interface ServiceStatusResult extends ServiceStatus {
+  /** The raw City status ('open' | 'alert' | 'closed' | 'unknown') */
+  ferryStatus: FerryStatusEvent['status'] | null;
+  /** The City's human-readable outage message, if any */
+  outageMessage: string | null;
+  /** Reason code from the City (e.g. 'Weather') */
+  outageReason: string | null;
+  /** When the City posted the status (ISO string) */
+  outagePostedAt: string | null;
+  /** Recent status history, newest first */
+  outageHistory: Omit<FerryStatusEvent, 'history'>[];
+}
+
+export function useServiceStatus(): ServiceStatusResult {
+  const [ferryData, setFerryData] = useState<FerryStatusEvent | null>(null);
 
   useEffect(() => {
-    const fetchStatus = async () => {
+    // Initial state via REST (no wait for first SSE message)
+    fetch(`${config.apiUrl}/api/ferry-status`)
+      .then(r => r.ok ? r.json() as Promise<FerryStatusEvent & { history?: FerryStatusEvent[] }> : Promise.reject())
+      .then(data => setFerryData(data))
+      .catch(() => { /* stay null */ });
+
+    // Live updates via SSE — replaces the old 60s polling interval
+    const es = new EventSource(`${config.apiUrl}/api/ferry-status/stream`);
+
+    es.addEventListener('ferry-status', (e: MessageEvent) => {
       try {
-        const res = await fetch(`${config.apiUrl}/api/ferry-status`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as FerryStatusResponse;
+        const data = JSON.parse(e.data as string) as FerryStatusEvent;
         setFerryData(data);
-      } catch (err) {
-        console.warn('[useServiceStatus] fetch failed:', err);
-        setFerryData(null);
+      } catch {
+        // ignore malformed
       }
+    });
+
+    es.onerror = () => {
+      // SSE will auto-reconnect; no state update needed on transient errors
     };
 
-    void fetchStatus();
-    const id = setInterval(() => void fetchStatus(), 60_000);
-    return () => clearInterval(id);
+    return () => es.close();
   }, []);
+
+  const history = (ferryData as (FerryStatusEvent & { history?: FerryStatusEvent[] }) | null)
+    ?.history ?? [];
 
   return {
     routes: buildRouteStatuses(ferryData),
-    fetchedAt: ferryData ? new Date() : null,
+    fetchedAt: ferryData ? new Date(ferryData.detectedAt) : null,
+    ferryStatus: ferryData?.status ?? null,
+    outageMessage: ferryData?.status !== 'open' ? (ferryData?.message ?? null) : null,
+    outageReason: ferryData?.status !== 'open' ? (ferryData?.reason ?? null) : null,
+    outagePostedAt: ferryData?.status !== 'open' ? (ferryData?.postedAt ?? null) : null,
+    outageHistory: history.map(({ history: _h, ...rest }) => rest),
   };
 }
