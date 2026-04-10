@@ -16,6 +16,7 @@ const ROUTE_IDS: RouteId[] = [
   'jack-layton-wards',
   'jack-layton-centre',
   'jack-layton-hanlans',
+  'jack-layton-billy-bishop',
 ];
 
 function mapDisruptionType(reason: string | null): DisruptionType {

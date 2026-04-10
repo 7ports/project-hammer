@@ -23,9 +23,10 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     description: 'Main mainland terminal at the foot of Bay Street. Ferries depart to all three island destinations year-round.',
     address: '9 Queens Quay W, Toronto',
     routes: [
-      { routeId: 'jack-layton-wards',   direction: 'outbound', label: "\u2192 Ward's Island" },
-      { routeId: 'jack-layton-centre',  direction: 'outbound', label: '\u2192 Centre Island' },
-      { routeId: 'jack-layton-hanlans', direction: 'outbound', label: "\u2192 Hanlan's Point" },
+      { routeId: 'jack-layton-wards',        direction: 'outbound', label: "\u2192 Ward's Island" },
+      { routeId: 'jack-layton-centre',       direction: 'outbound', label: '\u2192 Centre Island' },
+      { routeId: 'jack-layton-hanlans',      direction: 'outbound', label: "\u2192 Hanlan's Point" },
+      { routeId: 'jack-layton-billy-bishop', direction: 'outbound', label: '\u2192 Billy Bishop Airport' },
     ],
   },
   {
@@ -56,6 +57,16 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     address: "Hanlan's Point, Toronto Islands",
     routes: [
       { routeId: 'jack-layton-hanlans', direction: 'inbound', label: '\u2190 Jack Layton' },
+    ],
+  },
+  {
+    id: 'billy-bishop-airport',
+    name: 'Billy Bishop Airport',
+    coordinates: [-79.3964, 43.6274],
+    description: 'Airport ferry terminal serving Billy Bishop Toronto City Airport.',
+    address: 'Billy Bishop Toronto City Airport, Toronto Islands',
+    routes: [
+      { routeId: 'jack-layton-billy-bishop', direction: 'inbound', label: '\u2190 Jack Layton' },
     ],
   },
 ];

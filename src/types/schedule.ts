@@ -3,7 +3,8 @@ export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export type RouteId =
   | 'jack-layton-wards'
   | 'jack-layton-centre'
-  | 'jack-layton-hanlans';
+  | 'jack-layton-hanlans'
+  | 'jack-layton-billy-bishop';
 
 export type SeasonId = 'winter' | 'spring' | 'summer' | 'fall' | 'ice';
 
