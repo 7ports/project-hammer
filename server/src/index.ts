@@ -7,6 +7,7 @@ import { aisRouter } from './routes/ais';
 import { weatherRouter } from './routes/weather';
 import ferryStatusRouter from './routes/ferryStatus';
 import busynessRouter from './routes/busyness';
+import { aisStatusRouter } from './routes/aisStatus';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/ais', aisRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/ferry-status', ferryStatusRouter);
 app.use('/api/ferry-busyness', busynessRouter);
+app.use('/api/ais/status', aisStatusRouter);
 
 export default app;
 

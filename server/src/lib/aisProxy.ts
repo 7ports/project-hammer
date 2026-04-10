@@ -91,6 +91,7 @@ const TRUE_HEADING_UNAVAILABLE = 511;
 
 const BACKOFF_INITIAL_MS = 1_000;
 const BACKOFF_MAX_MS = 30_000;
+const SILENCE_TIMEOUT_MS = 5 * 60 * 1_000; // 5 minutes
 
 type PositionListener = (pos: VesselPosition) => void;
 type Unsubscribe = () => void;
@@ -99,6 +100,7 @@ export class AISProxy {
   private ws: WebSocket | null = null;
   private reconnectDelay = BACKOFF_INITIAL_MS;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private _silenceTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
 
   private readonly positions = new Map<number, VesselPosition>();
@@ -123,6 +125,16 @@ export class AISProxy {
   }
 
   /**
+   * Returns the current WebSocket connection status.
+   */
+  getWsStatus(): 'connected' | 'disconnected' | 'connecting' {
+    if (!this.ws) return 'disconnected';
+    if (this.ws.readyState === WebSocket.OPEN) return 'connected';
+    if (this.ws.readyState === WebSocket.CONNECTING) return 'connecting';
+    return 'disconnected';
+  }
+
+  /**
    * Registers a callback that fires whenever a new VesselPosition is parsed.
    * Returns an unsubscribe function that removes the listener.
    */
@@ -137,6 +149,25 @@ export class AISProxy {
   // Private — socket lifecycle
   // -------------------------------------------------------------------------
 
+  private _resetSilenceTimer(): void {
+    if (this._silenceTimer !== null) {
+      clearTimeout(this._silenceTimer);
+      this._silenceTimer = null;
+    }
+    this._silenceTimer = setTimeout(() => {
+      console.error('[AISProxy] No data in 5 min — forcing reconnect…');
+      this.ws?.terminate();
+      this.ws = null;
+    }, SILENCE_TIMEOUT_MS);
+  }
+
+  private _clearSilenceTimer(): void {
+    if (this._silenceTimer !== null) {
+      clearTimeout(this._silenceTimer);
+      this._silenceTimer = null;
+    }
+  }
+
   private _openSocket(): void {
     if (this.destroyed) return;
 
@@ -144,6 +175,7 @@ export class AISProxy {
     this.ws = ws;
 
     ws.on('open', () => {
+      this._resetSilenceTimer();
       const subscription = {
         APIKey: config.aisstreamApiKey,
         BoundingBoxes: [[[-90, -180], [90, 180]]],
@@ -166,6 +198,7 @@ export class AISProxy {
     });
 
     ws.on('close', (code: number, reason: Buffer) => {
+      this._clearSilenceTimer();
       if (this.destroyed) return;
       console.error(
         `[AISProxy] Connection closed (code=${code}, reason=${reason.toString() || 'none'}). ` +
@@ -202,6 +235,9 @@ export class AISProxy {
 
     const mmsi = raw.MetaData.MMSI;
     if (!isVesselMMSI(mmsi)) return;
+
+    // Valid position for a tracked vessel — reset the silence detector.
+    this._resetSilenceTimer();
 
     // TrueHeading 511 = not available; fall back to Cog.
     const heading =
