@@ -96,12 +96,32 @@ const SILENCE_TIMEOUT_MS = 5 * 60 * 1_000; // 5 minutes
 type PositionListener = (pos: VesselPosition) => void;
 type Unsubscribe = () => void;
 
+export interface AISProxyDiagnostics {
+  wsStatus: 'connected' | 'disconnected' | 'connecting';
+  totalMessages: number;
+  positionReports: number;
+  matchedVessels: number;
+  reconnects: number;
+  connectedAt: string | null;
+  lastMessageAt: string | null;
+  lastNonPositionMessage: string | null;
+}
+
 export class AISProxy {
   private ws: WebSocket | null = null;
   private reconnectDelay = BACKOFF_INITIAL_MS;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _silenceTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+
+  // Diagnostic counters
+  private _totalMessages = 0;
+  private _positionReports = 0;
+  private _matchedVessels = 0;
+  private _reconnects = 0;
+  private _connectedAt: Date | null = null;
+  private _lastMessageAt: Date | null = null;
+  private _lastNonPositionMessage: string | null = null;
 
   private readonly positions = new Map<number, VesselPosition>();
   private readonly listeners = new Set<PositionListener>();
@@ -132,6 +152,20 @@ export class AISProxy {
     if (this.ws.readyState === WebSocket.OPEN) return 'connected';
     if (this.ws.readyState === WebSocket.CONNECTING) return 'connecting';
     return 'disconnected';
+  }
+
+  /** Returns diagnostic counters for the /api/ais/status endpoint. */
+  getDiagnostics(): AISProxyDiagnostics {
+    return {
+      wsStatus: this.getWsStatus(),
+      totalMessages: this._totalMessages,
+      positionReports: this._positionReports,
+      matchedVessels: this._matchedVessels,
+      reconnects: this._reconnects,
+      connectedAt: this._connectedAt?.toISOString() ?? null,
+      lastMessageAt: this._lastMessageAt?.toISOString() ?? null,
+      lastNonPositionMessage: this._lastNonPositionMessage,
+    };
   }
 
   /**
@@ -175,6 +209,7 @@ export class AISProxy {
     this.ws = ws;
 
     ws.on('open', () => {
+      this._connectedAt = new Date();
       this._resetSilenceTimer();
       const subscription = {
         APIKey: config.aisstreamApiKey,
@@ -182,6 +217,7 @@ export class AISProxy {
         FiltersShipMMSI: VESSEL_MMSIS.map(String),
       };
       ws.send(JSON.stringify(subscription));
+      console.log('[AISProxy] WebSocket connected, subscription sent.');
     });
 
     ws.on('message', (data: WebSocket.RawData) => {
@@ -216,6 +252,7 @@ export class AISProxy {
       console.error(
         `[AISProxy] Attempting reconnect (delay was ${this.reconnectDelay / 1_000}s)…`,
       );
+      this._reconnects++;
       // Double the backoff for next failure, capped at max.
       this.reconnectDelay = Math.min(this.reconnectDelay * 2, BACKOFF_MAX_MS);
       this._openSocket();
@@ -227,8 +264,29 @@ export class AISProxy {
   // -------------------------------------------------------------------------
 
   private _handleMessage(raw: unknown): void {
-    if (!isRawAISMessage(raw)) return;
-    if (raw.MessageType !== 'PositionReport') return;
+    this._totalMessages++;
+    this._lastMessageAt = new Date();
+
+    if (!isRawAISMessage(raw)) {
+      // Log unexpected message shapes (subscription errors, auth failures, etc.)
+      const preview = JSON.stringify(raw).slice(0, 300);
+      console.warn(`[AISProxy] Non-AIS message #${this._totalMessages}: ${preview}`);
+      this._lastNonPositionMessage = preview;
+      return;
+    }
+
+    if (raw.MessageType !== 'PositionReport') {
+      // Log non-position message types (e.g., ShipStaticData, StandardClassBPositionReport)
+      if (this._totalMessages <= 5 || this._totalMessages % 100 === 0) {
+        console.log(`[AISProxy] Message #${this._totalMessages}: ${raw.MessageType} MMSI=${raw.MetaData.MMSI}`);
+      }
+      this._lastNonPositionMessage = `${raw.MessageType} MMSI=${raw.MetaData.MMSI}`;
+      // Still reset silence timer — the WS IS delivering data, just not PositionReports
+      this._resetSilenceTimer();
+      return;
+    }
+
+    this._positionReports++;
 
     const report = raw.Message.PositionReport;
     if (!report) return;
@@ -236,6 +294,7 @@ export class AISProxy {
     const mmsi = raw.MetaData.MMSI;
     if (!isVesselMMSI(mmsi)) return;
 
+    this._matchedVessels++;
     // Valid position for a tracked vessel — reset the silence detector.
     this._resetSilenceTimer();
 
