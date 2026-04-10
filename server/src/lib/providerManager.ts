@@ -15,6 +15,29 @@ import { AprsfiProvider } from './providers/aprsfiProvider';
 import { VesselApiProvider } from './providers/vesselApiProvider';
 
 // ---------------------------------------------------------------------------
+// Structured logging
+// ---------------------------------------------------------------------------
+
+type LogLevel = 'info' | 'warn' | 'error';
+
+function log(level: LogLevel, event: string, fields: Record<string, unknown> = {}): void {
+  const entry = JSON.stringify({
+    level,
+    service: 'ais-provider-manager',
+    event,
+    ts: new Date().toISOString(),
+    ...fields,
+  });
+  if (level === 'error') {
+    console.error(entry);
+  } else if (level === 'warn') {
+    console.warn(entry);
+  } else {
+    console.log(entry);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Options
 // ---------------------------------------------------------------------------
 
@@ -80,10 +103,14 @@ export class AISProviderManager {
   /** Starts the active provider. */
   connect(): void {
     if (this.providers.length === 0) {
-      console.warn('[AISProviderManager] No providers configured.');
+      log('warn', 'no_providers_configured');
       return;
     }
     this._startedAt = new Date();
+    log('info', 'manager_start', {
+      provider_order: this.providers.map((p) => p.name),
+      silence_timeout_ms: this.silenceTimeoutMs,
+    });
     this._startProvider(this.activeIndex);
   }
 
@@ -182,13 +209,13 @@ export class AISProviderManager {
   private _startProvider(index: number): void {
     const provider = this.providers[index];
     if (!provider) {
-      console.error('[AISProviderManager] No provider at index', index);
+      log('error', 'provider_not_found', { index });
       return;
     }
 
     this.activeIndex = index;
     this._activeProviderConnectedAt = new Date();
-    console.log(`[AISProviderManager] Starting provider: ${provider.name}`);
+    log('info', 'provider_start', { provider: provider.name, index });
 
     provider.start((pos) => {
       this._onData(pos);
@@ -200,7 +227,7 @@ export class AISProviderManager {
   private _stopProvider(index: number): void {
     const provider = this.providers[index];
     if (!provider) return;
-    console.log(`[AISProviderManager] Stopping provider: ${provider.name}`);
+    log('info', 'provider_stop', { provider: provider.name, index });
     provider.stop();
   }
 
@@ -226,7 +253,7 @@ export class AISProviderManager {
       try {
         listener(pos);
       } catch (err) {
-        console.error('[AISProviderManager] Listener threw:', err);
+        log('error', 'listener_threw', { error: String(err) });
       }
     }
   }
@@ -245,13 +272,16 @@ export class AISProviderManager {
 
     this._allProvidersDown = allDown;
     const event: 'providers-down' | 'providers-up' = allDown ? 'providers-down' : 'providers-up';
-    console.log(`[AISProviderManager] Status change: ${event}`);
+    log(allDown ? 'warn' : 'info', 'provider_health_change', {
+      status: event,
+      provider_statuses: this.providers.map((p) => ({ name: p.name, status: p.getStatus() })),
+    });
 
     for (const cb of this._statusListeners) {
       try {
         cb(event);
       } catch (err) {
-        console.error('[AISProviderManager] Status listener threw:', err);
+        log('error', 'status_listener_threw', { error: String(err) });
       }
     }
   }
@@ -293,11 +323,17 @@ export class AISProviderManager {
 
     const prevName = this.providers[prevIndex]?.name ?? 'unknown';
     const nextName = this.providers[nextIndex]?.name ?? 'unknown';
+    const wrappedAround = nextIndex <= prevIndex && this.providers.length > 1;
 
-    console.error(
-      `[AISProviderManager] Silence timeout — failing over from '${prevName}' to '${nextName}' ` +
-        `(failover #${this._failoverCount}, cooldown ${cooldownMs / 1_000}s)`,
-    );
+    log('warn', 'failover', {
+      from: prevName,
+      to: nextName,
+      reason: 'silence_timeout',
+      silence_timeout_ms: this.silenceTimeoutMs,
+      failover_count: this._failoverCount,
+      cooldown_ms: cooldownMs,
+      wrapped_around: wrappedAround,
+    });
 
     this._stopProvider(prevIndex);
     this._checkProviderHealth();
@@ -321,17 +357,34 @@ export function createProviderManager(): AISProviderManager {
   for (const name of config.aisProviderOrder) {
     if (name === 'aisstream') {
       providers.push(new AISStreamProvider(config.aisstreamApiKey));
-    } else if (name === 'aprsfi' && config.aprsfiApiKey !== null) {
-      providers.push(new AprsfiProvider(config.aprsfiApiKey, config.aisPollingIntervalMs));
-    } else if (name === 'vesselapi' && config.vesselApiKey !== null) {
-      providers.push(new VesselApiProvider(config.vesselApiKey));
+    } else if (name === 'aprsfi') {
+      if (config.aprsfiApiKey !== null) {
+        providers.push(new AprsfiProvider(config.aprsfiApiKey, config.aisPollingIntervalMs));
+      } else {
+        log('warn', 'provider_skipped', {
+          provider: 'aprsfi',
+          reason: 'APRSFI_API_KEY not set',
+        });
+      }
+    } else if (name === 'vesselapi') {
+      if (config.vesselApiKey !== null) {
+        providers.push(new VesselApiProvider(config.vesselApiKey));
+      } else {
+        log('warn', 'provider_skipped', {
+          provider: 'vesselapi',
+          reason: 'VESSEL_API_KEY not set',
+        });
+      }
     } else {
-      console.warn(`[AIS] Unknown or unconfigured provider: ${name}`);
+      log('warn', 'provider_unknown', { provider: name });
     }
   }
 
   if (providers.length === 0) {
-    console.warn('[AIS] No providers configured — falling back to aisstream');
+    log('warn', 'no_providers_after_config', {
+      requested: config.aisProviderOrder,
+      action: 'falling back to aisstream',
+    });
     providers.push(new AISStreamProvider(config.aisstreamApiKey));
   }
 
