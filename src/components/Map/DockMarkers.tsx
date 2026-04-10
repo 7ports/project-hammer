@@ -4,7 +4,6 @@ import { DOCK_LOCATIONS } from '../../lib/docks';
 import type { DockLocation } from '../../lib/docks';
 import { VESSEL_NAMES } from '../../lib/constants';
 import { useSchedule } from '../../hooks/useSchedule';
-import { useFerryBusyness } from '../../hooks/useFerryBusyness';
 import { RidershipChart } from './RidershipChart';
 import type { Departure } from '../../types/schedule';
 import type { Vessel } from '../../types/vessel';
@@ -63,8 +62,6 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
           <p className="dock-popup__address">📍 {activeDock.address}</p>
           <p className="landmark-popup__desc">{activeDock.description}</p>
 
-          <BusynessIndicator dockId={activeDock.id} />
-
           <DockSummary dockId={activeDock.id} vessels={vessels} />
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
 
@@ -73,18 +70,6 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
         </Popup>
       )}
     </>
-  );
-}
-
-function BusynessIndicator({ dockId }: { dockId: string }) {
-  const { level, label, description, indicatorLabel, serviceOperating } = useFerryBusyness(dockId);
-  if (!serviceOperating) return null;
-  return (
-    <div className={`dock-popup__busyness dock-popup__busyness--${level}`}>
-      <span className="dock-popup__busyness-label">{indicatorLabel}</span>
-      <span className="dock-popup__busyness-badge">{label}</span>
-      <span className="dock-popup__busyness-desc">{description}</span>
-    </div>
   );
 }
 

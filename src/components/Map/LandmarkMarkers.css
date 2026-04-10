@@ -173,56 +173,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Busyness indicator */
-.dock-popup__busyness {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0;
-  flex-wrap: wrap;
-}
-
-.dock-popup__busyness-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  flex-shrink: 0;
-}
-
-.dock-popup__busyness-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 10px;
-  letter-spacing: 0.02em;
-}
-
-.dock-popup__busyness-desc {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-}
-
-/* Level-specific badge colours */
-.dock-popup__busyness--quiet .dock-popup__busyness-badge {
-  background: rgba(0, 230, 118, 0.15);
-  color: #00e676;
-}
-.dock-popup__busyness--moderate .dock-popup__busyness-badge {
-  background: rgba(0, 180, 216, 0.15);
-  color: #00b4d8;
-}
-.dock-popup__busyness--busy .dock-popup__busyness-badge {
-  background: rgba(255, 196, 0, 0.15);
-  color: #ffc400;
-}
-.dock-popup__busyness--very-busy .dock-popup__busyness-badge {
-  background: rgba(255, 82, 82, 0.15);
-  color: #ff5252;
-}
-
 /* Ridership chart */
 .ridership-chart {
   margin: 10px 0 4px;
