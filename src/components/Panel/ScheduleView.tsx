@@ -122,7 +122,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         </span>
       </div>
 
-      {state === 'operating' ? (
+      {state === 'operating' || state === 'unknown' ? (
         <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
           {next4.length === 0 ? (
             <p className="schedule-route__notice">No more departures today</p>
