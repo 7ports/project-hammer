@@ -7,7 +7,10 @@
  *   2. Registers a listener with aisProxy to forward every new position.
  *   3. Sends a keep-alive comment every 15 s so intermediary proxies do not
  *      close idle connections.
- *   4. Cleans up the listener and interval on client disconnect — no leaks.
+ *   4. On connect, sends the current provider status if all providers are down.
+ *   5. Forwards status change events (providers-down / providers-up) as named
+ *      SSE events so the frontend can show an outage message.
+ *   6. Cleans up the listener and interval on client disconnect — no leaks.
  */
 
 import { Router, Request, Response } from 'express';
@@ -37,10 +40,24 @@ aisRouter.get('/', (req: Request, res: Response) => {
   }
 
   // -------------------------------------------------------------------------
+  // Send current provider status on connect if all providers are down
+  // -------------------------------------------------------------------------
+  if (aisProxy.areAllProvidersDown()) {
+    res.write(`event: status\ndata: ${JSON.stringify({ type: 'providers-down' })}\n\n`);
+  }
+
+  // -------------------------------------------------------------------------
   // Forward ongoing position updates
   // -------------------------------------------------------------------------
-  const unsubscribe = aisProxy.onPosition((pos) => {
+  const unsubscribePosition = aisProxy.onPosition((pos) => {
     res.write(`data: ${JSON.stringify(pos)}\n\n`);
+  });
+
+  // -------------------------------------------------------------------------
+  // Forward provider status change events
+  // -------------------------------------------------------------------------
+  const unsubscribeStatus = aisProxy.onStatusChange((status) => {
+    res.write(`event: status\ndata: ${JSON.stringify({ type: status })}\n\n`);
   });
 
   // -------------------------------------------------------------------------
@@ -54,7 +71,8 @@ aisRouter.get('/', (req: Request, res: Response) => {
   // Cleanup on client disconnect
   // -------------------------------------------------------------------------
   req.on('close', () => {
-    unsubscribe();
+    unsubscribePosition();
+    unsubscribeStatus();
     clearInterval(keepAliveTimer);
     aisProxy.clientDisconnected();
   });

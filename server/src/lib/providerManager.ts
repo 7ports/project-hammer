@@ -23,8 +23,12 @@ export interface ProviderManagerOptions {
   silenceTimeoutMs?: number;
 }
 
+export type StatusChangeCallback = (status: 'providers-down' | 'providers-up') => void;
+
 // Cooldown delays between successive failovers: 60s, 120s, 300s (cap).
 const FAILOVER_COOLDOWNS_MS = [60_000, 120_000, 300_000];
+
+const HEALTH_CHECK_INTERVAL_MS = 30_000;
 
 // ---------------------------------------------------------------------------
 // AISProviderManager
@@ -39,10 +43,15 @@ export class AISProviderManager {
   private failoverCooldownTimer: ReturnType<typeof setTimeout> | null = null;
   private failoverInProgress = false;
   private _activeClients = 0;
+  private _healthCheckTimer: ReturnType<typeof setInterval>;
 
   // Canonical position store
   private readonly positions = new Map<number, VesselPosition>();
   private readonly listeners = new Set<PositionListener>();
+
+  // Status change listeners
+  private readonly _statusListeners = new Set<StatusChangeCallback>();
+  private _allProvidersDown = false;
 
   // Manager-level diagnostics
   private _totalMessages = 0;
@@ -58,6 +67,10 @@ export class AISProviderManager {
   constructor(providers: IAISProvider[], options: ProviderManagerOptions = {}) {
     this.providers = providers;
     this.silenceTimeoutMs = options.silenceTimeoutMs ?? config.aisSilenceTimeoutMs;
+
+    this._healthCheckTimer = setInterval(() => {
+      this._checkProviderHealth();
+    }, HEALTH_CHECK_INTERVAL_MS);
   }
 
   // -------------------------------------------------------------------------
@@ -146,6 +159,22 @@ export class AISProviderManager {
     };
   }
 
+  /**
+   * Registers a callback that fires when all providers go down or come back up.
+   * Returns an unsubscribe function.
+   */
+  onStatusChange(cb: StatusChangeCallback): Unsubscribe {
+    this._statusListeners.add(cb);
+    return () => {
+      this._statusListeners.delete(cb);
+    };
+  }
+
+  /** Returns true if all providers are currently in error or stopped state. */
+  areAllProvidersDown(): boolean {
+    return this._allProvidersDown;
+  }
+
   // -------------------------------------------------------------------------
   // Private — provider lifecycle
   // -------------------------------------------------------------------------
@@ -189,6 +218,7 @@ export class AISProviderManager {
 
     this._resetSilenceTimer();
     this._emit(pos);
+    this._checkProviderHealth();
   }
 
   private _emit(pos: VesselPosition): void {
@@ -197,6 +227,31 @@ export class AISProviderManager {
         listener(pos);
       } catch (err) {
         console.error('[AISProviderManager] Listener threw:', err);
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Private — provider health / status events
+  // -------------------------------------------------------------------------
+
+  private _checkProviderHealth(): void {
+    const allDown = this.providers.every((p) => {
+      const s = p.getStatus();
+      return s === 'error' || s === 'stopped';
+    });
+
+    if (allDown === this._allProvidersDown) return;
+
+    this._allProvidersDown = allDown;
+    const event: 'providers-down' | 'providers-up' = allDown ? 'providers-down' : 'providers-up';
+    console.log(`[AISProviderManager] Status change: ${event}`);
+
+    for (const cb of this._statusListeners) {
+      try {
+        cb(event);
+      } catch (err) {
+        console.error('[AISProviderManager] Status listener threw:', err);
       }
     }
   }
@@ -245,6 +300,7 @@ export class AISProviderManager {
     );
 
     this._stopProvider(prevIndex);
+    this._checkProviderHealth();
 
     // Wait for the cooldown before starting the next provider.
     this.failoverCooldownTimer = setTimeout(() => {

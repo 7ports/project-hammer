@@ -10,6 +10,7 @@
 export type { VesselPosition, AISProxyDiagnostics, PositionListener, Unsubscribe } from './types';
 export { AISProviderManager as AISProxy } from './providerManager';
 export { createProviderManager } from './providerManager';
+export type { StatusChangeCallback } from './providerManager';
 
 import { createProviderManager } from './providerManager';
 
