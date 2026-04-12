@@ -60,7 +60,6 @@ export function DockMarkers({ vessels }: DockMarkersProps) {
 
           <p className="landmark-popup__title">{activeDock.name}</p>
           <p className="dock-popup__address">📍 {activeDock.address}</p>
-          <p className="landmark-popup__desc">{activeDock.description}</p>
 
           <DockSummary dockId={activeDock.id} vessels={vessels} />
           <DockVesselList dockId={activeDock.id} vessels={vessels} />
@@ -163,19 +162,44 @@ function DockSchedule({ dock, upcomingDepartures }: DockScheduleProps) {
     })
     .filter((d): d is { label: string; time: string } => d.time !== null);
 
-  if (nextDepartures.length === 0) return null;
+  const nextArrivals = dock.routes
+    .map((route) => {
+      const oppDir = route.direction === 'outbound' ? 'inbound' : 'outbound';
+      const arrivals = upcomingDepartures(route.routeId, oppDir, 1);
+      return { label: route.label, time: arrivals[0]?.time ?? null };
+    })
+    .filter((d): d is { label: string; time: string } => d.time !== null);
+
+  if (nextDepartures.length === 0 && nextArrivals.length === 0) return null;
 
   return (
-    <div className="dock-popup__section">
-      <p className="dock-popup__section-label">Next departures</p>
-      <ul className="dock-popup__vessel-list">
-        {nextDepartures.map((dep) => (
-          <li key={dep.label} className="dock-popup__schedule-item">
-            <span className="dock-popup__route-label">{dep.label}</span>
-            <span className="dock-popup__departure-time">{dep.time}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <>
+      {nextDepartures.length > 0 && (
+        <div className="dock-popup__section">
+          <p className="dock-popup__section-label">Next departures</p>
+          <ul className="dock-popup__vessel-list">
+            {nextDepartures.map((dep) => (
+              <li key={dep.label} className="dock-popup__schedule-item">
+                <span className="dock-popup__route-label">{dep.label}</span>
+                <span className="dock-popup__departure-time">{dep.time}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {nextArrivals.length > 0 && (
+        <div className="dock-popup__section">
+          <p className="dock-popup__section-label">Next arrivals</p>
+          <ul className="dock-popup__vessel-list">
+            {nextArrivals.map((arr) => (
+              <li key={arr.label} className="dock-popup__schedule-item">
+                <span className="dock-popup__route-label">{arr.label}</span>
+                <span className="dock-popup__departure-time">{arr.time}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
   );
 }

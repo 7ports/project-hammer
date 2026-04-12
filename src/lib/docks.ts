@@ -20,7 +20,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     id: 'jack-layton',
     name: 'Jack Layton Ferry Terminal',
     coordinates: [-79.3750, 43.6402],
-    description: 'Main mainland terminal at the foot of Bay Street. Ferries depart to all three island destinations year-round.',
+    description: 'Main mainland terminal — all routes depart here.',
     address: '9 Queens Quay W, Toronto',
     routes: [
       { routeId: 'jack-layton-wards',        direction: 'outbound', label: "\u2192 Ward's Island" },
@@ -33,7 +33,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     id: 'wards-island',
     name: "Ward's Island",
     coordinates: [-79.3578, 43.6314],
-    description: "Eastern island terminal serving the residential Ward's Island community. Quiet, tree-lined, and a short walk from the beach.",
+    description: 'Residential island community, year-round service.',
     address: "Ward's Island, Toronto Islands",
     routes: [
       { routeId: 'jack-layton-wards', direction: 'inbound', label: '\u2190 Jack Layton' },
@@ -43,7 +43,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     id: 'centre-island',
     name: 'Centre Island',
     coordinates: [-79.3784, 43.6224],
-    description: 'The most popular island destination. Steps from Centreville Amusement Park, picnic grounds, and the lagoon.',
+    description: 'Centreville, picnic grounds, and the lagoon.',
     address: 'Centre Island, Toronto Islands',
     routes: [
       { routeId: 'jack-layton-centre', direction: 'inbound', label: '\u2190 Jack Layton' },
@@ -53,7 +53,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     id: 'hanlans-point',
     name: "Hanlan's Point",
     coordinates: [-79.3890, 43.6279],
-    description: "Western island terminal near Billy Bishop Airport and Hanlan's beach. Gateway to the quieter western islands.",
+    description: "Near Billy Bishop Airport and Hanlan's Beach.",
     address: "Hanlan's Point, Toronto Islands",
     routes: [
       { routeId: 'jack-layton-hanlans', direction: 'inbound', label: '\u2190 Jack Layton' },
@@ -63,7 +63,7 @@ export const DOCK_LOCATIONS: DockLocation[] = [
     id: 'billy-bishop-airport',
     name: 'Billy Bishop Airport',
     coordinates: [-79.3964, 43.6274],
-    description: 'Airport ferry terminal serving Billy Bishop Toronto City Airport.',
+    description: 'Airport ferry terminal for Billy Bishop YTZ.',
     address: 'Billy Bishop Toronto City Airport, Toronto Islands',
     routes: [
       { routeId: 'jack-layton-billy-bishop', direction: 'inbound', label: '\u2190 Jack Layton' },
