@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "C:\\Users\\Raj\\AppData\\Local\\nvm\\v16.15.0\\npm.cmd",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
     }
