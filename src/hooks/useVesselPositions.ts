@@ -35,7 +35,7 @@ function deadReckon(
 const OFFLINE_THRESHOLD_MS = 180_000; // 3 minutes (was 60s — too tight for AIS gaps)
 const DOCKED_SPEED_KNOTS = 0.5;
 const AIS_UPDATE_INTERVAL_MS = 10_000; // ~10 s between AIS pings
-const MAX_HISTORY_LENGTH = 8;
+const MAX_HISTORY_LENGTH = 30;
 const NEXT_DEPARTURE_LOOKAHEAD_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 export interface VesselPositionsResult {
@@ -131,7 +131,7 @@ export function useVesselPositions(): VesselPositionsResult {
 
       if (status === 'moving') {
         const history = positionHistoryRef.current.get(mmsi) ?? [];
-        const updated = [...history, finalPos].slice(-MAX_HISTORY_LENGTH);
+        const updated = [...history, { ...finalPos, receivedAt: Date.now() }].slice(-MAX_HISTORY_LENGTH);
         positionHistoryRef.current.set(mmsi, updated);
       }
 

@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react';
 import Map, { type MapRef } from 'react-map-gl/maplibre';
-import type { MapLibreEvent } from 'maplibre-gl';
+import type { MapLibreEvent, MapStyleDataEvent } from 'maplibre-gl';
 import { config } from '../../lib/config';
 import { HARBOUR_CENTER, DEFAULT_ZOOM } from '../../lib/constants';
 import { loadFerryIcon } from '../../lib/ferryIcon';
@@ -26,6 +26,12 @@ export function FerryMap({ children }: FerryMapProps) {
     loadFerryIcon(event.target);
   }, []);
 
+  const handleStyleData = useCallback((event: MapStyleDataEvent) => {
+    if (!event.target.hasImage('ferry-icon')) {
+      loadFerryIcon(event.target);
+    }
+  }, []);
+
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Map
@@ -39,6 +45,7 @@ export function FerryMap({ children }: FerryMapProps) {
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
         onLoad={handleMapLoad}
+        onStyleData={handleStyleData}
         attributionControl={{}}
         minZoom={12}
         maxZoom={18}

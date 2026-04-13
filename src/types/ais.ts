@@ -8,4 +8,5 @@ export interface VesselPosition {
   cog: number;            // course over ground, degrees
   speed: number;          // @deprecated alias for sog
   timestamp: string;      // ISO 8601
+  receivedAt?: number;    // Unix ms (client-side, set when pushed to positionHistory)
 }

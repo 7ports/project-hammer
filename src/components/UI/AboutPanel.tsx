@@ -154,9 +154,54 @@ export function AboutPanel({ isOpen, onClose, triggerRef }: AboutPanelProps) {
           </p>
         </section>
 
-        {/* Footer */}
+        {/* Credits */}
         <footer className="about-panel__footer">
-          AIS data from aisstream.io · Map tiles by MapTiler
+          <ul className="about-panel__credits">
+            <li>
+              AIS data by{' '}
+              <a
+                className="about-panel__link"
+                href="https://aisstream.io"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                aisstream.io
+              </a>
+            </li>
+            <li>
+              Map tiles by{' '}
+              <a
+                className="about-panel__link"
+                href="https://www.maptiler.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                MapTiler
+              </a>
+            </li>
+            <li>
+              Weather data by{' '}
+              <a
+                className="about-panel__link"
+                href="https://weather.gc.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Environment and Climate Change Canada
+              </a>
+            </li>
+            <li>
+              Ferry schedule by{' '}
+              <a
+                className="about-panel__link"
+                href="https://open.toronto.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                City of Toronto Open Data
+              </a>
+            </li>
+          </ul>
         </footer>
       </div>
     </div>

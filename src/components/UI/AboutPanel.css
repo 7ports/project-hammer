@@ -204,6 +204,15 @@
   line-height: 1.5;
 }
 
+.about-panel__credits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* Reduced motion: skip transform entrance animation */
 @media (prefers-reduced-motion: reduce) {
   .about-panel {

@@ -208,6 +208,7 @@ bd --version 2>/dev/null && echo "beads OK" || echo "beads missing"          # b
 - **Dockerfile missing** → "Run `mcp__project-voltron__scaffold_project` first."
 - **Token missing** → Agents fail silently with "Not logged in". Check Alexandria guide `project-voltron-docker` before proceeding.
 - **beads missing** → warn, fall back to manual dependency tracking. Install: `npm install -g @beads/bd`
+- **Voltron MCP tools unavailable** (e.g. `mcp__project-voltron__update_progress` not found) → The MCP server is not loaded in this session. Tell the user: "Voltron MCP is not connected. Quit and relaunch Claude Code — the auto-update hook will register it in global settings on the next session start." Do not attempt to proceed with progress tracking or Docker agent invocations until the MCP is confirmed available.
 
 ## Progress Tracking
 
