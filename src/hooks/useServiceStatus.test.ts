@@ -34,6 +34,7 @@ interface FerryStatusResponse {
   message: string | null;
   postedAt: string | null;
   source: 'live' | 'error';
+  parsedTimes: string[];
 }
 
 const ROUTE_IDS: RouteId[] = [
@@ -59,23 +60,35 @@ function buildRouteStatuses(ferry: FerryStatusResponse | null): RouteStatus[] {
         status: 'seasonal-closure',
         message: 'Seasonal — service resumes April 15',
         disruptionType: null,
+        parsedTimes: [],
       };
     }
 
     if (!ferry || ferry.status === 'unknown') {
-      return { routeId, status: 'unknown', message: null, disruptionType: null };
+      return { routeId, status: 'unknown', message: null, disruptionType: null, parsedTimes: ferry?.parsedTimes ?? [] };
     }
 
     if (ferry.status === 'open') {
-      return { routeId, status: 'operating', message: null, disruptionType: null };
+      return { routeId, status: 'operating', message: null, disruptionType: null, parsedTimes: ferry.parsedTimes ?? [] };
     }
 
-    // alert or closed — terminal-wide disruption applies to all routes
+    if (ferry.status === 'closed') {
+      return {
+        routeId,
+        status: 'suspended',
+        message: ferry.message,
+        disruptionType: mapDisruptionType(ferry.reason),
+        parsedTimes: ferry.parsedTimes ?? [],
+      };
+    }
+
+    // alert — service disrupted but altered schedule may be available via parsedTimes
     return {
       routeId,
       status: 'disrupted',
       message: ferry.message,
       disruptionType: mapDisruptionType(ferry.reason),
+      parsedTimes: ferry.parsedTimes ?? [],
     };
   });
 }
@@ -203,7 +216,7 @@ describe('buildRouteStatuses', () => {
   it('Centre Island shows seasonal-closure when before April 15 regardless of ferry status', () => {
     setTime('2026-04-14T12:00:00');
     const openFerry: FerryStatusResponse = {
-      status: 'open', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'open', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     const status = centreStatus(openFerry);
     expect(status.status).toBe('seasonal-closure');
@@ -212,7 +225,7 @@ describe('buildRouteStatuses', () => {
   it('Centre Island shows seasonal-closure when after October 15 regardless of ferry status', () => {
     setTime('2026-10-20T12:00:00');
     const openFerry: FerryStatusResponse = {
-      status: 'open', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'open', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     const status = centreStatus(openFerry);
     expect(status.status).toBe('seasonal-closure');
@@ -230,7 +243,7 @@ describe('buildRouteStatuses', () => {
   it("maps ferry status 'open' to ServiceState 'operating' for Ward's Island", () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'open', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'open', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).status).toBe('operating');
   });
@@ -238,7 +251,7 @@ describe('buildRouteStatuses', () => {
   it("maps ferry status 'open' to 'operating' for Centre Island in season", () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'open', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'open', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(centreStatus(ferry).status).toBe('operating');
   });
@@ -253,11 +266,12 @@ describe('buildRouteStatuses', () => {
       message: 'Rough conditions — reduced schedule',
       postedAt: null,
       source: 'live',
+      parsedTimes: [],
     };
     expect(wardsStatus(ferry).status).toBe('disrupted');
   });
 
-  it("maps ferry status 'closed' to ServiceState 'disrupted'", () => {
+  it("maps ferry status 'closed' to ServiceState 'suspended'", () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
       status: 'closed',
@@ -265,8 +279,9 @@ describe('buildRouteStatuses', () => {
       message: 'Vessel maintenance',
       postedAt: null,
       source: 'live',
+      parsedTimes: [],
     };
-    expect(wardsStatus(ferry).status).toBe('disrupted');
+    expect(wardsStatus(ferry).status).toBe('suspended');
   });
 
   // ── ferry status 'unknown' → unknown ─────────────────────────────────────
@@ -274,7 +289,7 @@ describe('buildRouteStatuses', () => {
   it("maps ferry status 'unknown' to ServiceState 'unknown'", () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'unknown', reason: null, message: null, postedAt: null, source: 'error',
+      status: 'unknown', reason: null, message: null, postedAt: null, source: 'error', parsedTimes: [],
     };
     expect(wardsStatus(ferry).status).toBe('unknown');
   });
@@ -297,7 +312,7 @@ describe('buildRouteStatuses', () => {
   it('maps reason "weather" to disruptionType "weather"', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'alert', reason: 'weather', message: 'High winds', postedAt: null, source: 'live',
+      status: 'alert', reason: 'weather', message: 'High winds', postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).disruptionType).toBe('weather');
   });
@@ -305,7 +320,7 @@ describe('buildRouteStatuses', () => {
   it('maps reason "mechanical issue" to disruptionType "mechanical"', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'closed', reason: 'mechanical issue', message: 'Engine failure', postedAt: null, source: 'live',
+      status: 'closed', reason: 'mechanical issue', message: 'Engine failure', postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).disruptionType).toBe('mechanical');
   });
@@ -313,7 +328,7 @@ describe('buildRouteStatuses', () => {
   it('maps reason "accident" to disruptionType "accident"', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'closed', reason: 'accident on dock', message: null, postedAt: null, source: 'live',
+      status: 'closed', reason: 'accident on dock', message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).disruptionType).toBe('accident');
   });
@@ -321,7 +336,7 @@ describe('buildRouteStatuses', () => {
   it('maps unknown reason to disruptionType "other"', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'alert', reason: 'special event', message: null, postedAt: null, source: 'live',
+      status: 'alert', reason: 'special event', message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).disruptionType).toBe('other');
   });
@@ -329,7 +344,7 @@ describe('buildRouteStatuses', () => {
   it('maps null reason to disruptionType "other"', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'alert', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'alert', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).disruptionType).toBe('other');
   });
@@ -344,6 +359,7 @@ describe('buildRouteStatuses', () => {
       message: 'Service delayed due to high winds',
       postedAt: null,
       source: 'live',
+      parsedTimes: [],
     };
     expect(wardsStatus(ferry).message).toBe('Service delayed due to high winds');
   });
@@ -351,7 +367,7 @@ describe('buildRouteStatuses', () => {
   it('sets message to null for operating routes', () => {
     setTime('2026-07-15T12:00:00');
     const ferry: FerryStatusResponse = {
-      status: 'open', reason: null, message: null, postedAt: null, source: 'live',
+      status: 'open', reason: null, message: null, postedAt: null, source: 'live', parsedTimes: [],
     };
     expect(wardsStatus(ferry).message).toBeNull();
   });

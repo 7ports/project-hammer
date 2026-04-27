@@ -9,12 +9,14 @@ const ROUTE_DISPLAY: { id: RouteId; label: string }[] = [
   { id: 'jack-layton-wards', label: "Ward's Island" },
   { id: 'jack-layton-centre', label: 'Centre Island' },
   { id: 'jack-layton-hanlans', label: "Hanlan's Point" },
+  { id: 'jack-layton-billy-bishop', label: 'Billy Bishop Airport' },
 ];
 
 const STATUS_LABELS: Record<ServiceState, string> = {
   operating: 'Operating',
   'seasonal-closure': 'Seasonal closure',
   disrupted: 'Disrupted',
+  suspended: 'No service',
   unknown: 'Status unknown',
 };
 
@@ -22,6 +24,7 @@ const STATUS_CSS_CLASS: Record<ServiceState, string> = {
   operating: 'status--operating',
   'seasonal-closure': 'status--seasonal',
   disrupted: 'status--disrupted',
+  suspended: 'status--suspended',
   unknown: 'status--unknown',
 };
 
@@ -65,7 +68,28 @@ function RouteRow({ routeId, label }: RouteRowProps) {
   // Only show departures for routes active in the current season (respects seasonStart/seasonEnd)
   const routeInSeason = activeRoutes.some(r => r.routeId === routeId);
   const next4 = routeInSeason ? upcomingDepartures(routeId, 'outbound', 4) : [];
-  const firstTime = next4[0]?.time ?? null;
+
+  // Disrupted state: if the City posted specific times, filter to upcoming and show those.
+  // Otherwise fall through to the regular schedule with a caveat.
+  const parsedTimes = routeStatus?.parsedTimes ?? [];
+  const upcomingParsedTimes = (() => {
+    if (state !== 'disrupted' || parsedTimes.length === 0) return [];
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    return parsedTimes
+      .filter(t => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m > currentMinutes;
+      })
+      .slice(0, 4);
+  })();
+  const showParsedTimes = state === 'disrupted' && upcomingParsedTimes.length > 0;
+  // Choose the times to display (chips). Each item just needs a `time` string.
+  const departuresToShow: { time: string }[] = showParsedTimes
+    ? upcomingParsedTimes.map(t => ({ time: t }))
+    : next4;
+
+  const firstTime = departuresToShow[0]?.time ?? null;
   const countdown = useCountdown(firstTime);
 
   const isScheduleInferred = state === 'unknown' && next4.length > 0;
@@ -96,7 +120,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
   }
 
   // Route not operating in the active season (e.g. Centre/Hanlans in winter)
-  if (!routeInSeason && state !== 'disrupted') {
+  if (!routeInSeason && state !== 'disrupted' && state !== 'suspended') {
     return (
       <div className="schedule-route">
         <div className="schedule-route__header">
@@ -130,16 +154,23 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         </span>
       </div>
 
-      {effectiveState === 'operating' || effectiveState === 'unknown' ? (
+      {effectiveState === 'suspended' ? (
+        <p
+          className="schedule-route__notice schedule-route__notice--suspended"
+          role="alert"
+        >
+          {routeStatus?.message ?? 'No service today'}
+        </p>
+      ) : effectiveState === 'operating' || effectiveState === 'unknown' || effectiveState === 'disrupted' ? (
         <>
           <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
-            {next4.length === 0 ? (
+            {departuresToShow.length === 0 ? (
               <p className="schedule-route__notice">No more departures today</p>
             ) : (
-              next4.map((dep, i) => (
+              departuresToShow.map((dep, i) => (
                 <div
                   key={`${dep.time}-${i}`}
-                  className={`schedule-route__departure${i === 0 ? ' schedule-route__departure--next' : ''}`}
+                  className={`schedule-route__departure${i === 0 ? ' schedule-route__departure--next' : ''}${effectiveState === 'disrupted' ? ' schedule-route__departure--disrupted' : ''}`}
                 >
                   {i === 0 && <span className="schedule-route__next-pill">NEXT</span>}
                   <span className="schedule-route__time">{dep.time}</span>
@@ -153,7 +184,19 @@ function RouteRow({ routeId, label }: RouteRowProps) {
             )}
           </div>
 
-          {routeInSeason && (
+          {effectiveState === 'disrupted' && routeStatus?.message && (
+            <p
+              className="schedule-route__notice schedule-route__notice--disrupted-info"
+              role="alert"
+            >
+              {routeStatus.message}
+              {!showParsedTimes && next4.length > 0 && (
+                <span className="schedule-route__notice-caveat"> — Times based on regular schedule and may not be accurate.</span>
+              )}
+            </p>
+          )}
+
+          {effectiveState !== 'disrupted' && routeInSeason && (
             <div
               className="schedule-route__arrival"
               aria-label={`Next arrival at Jack Layton for ${label}`}
@@ -169,8 +212,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         </>
       ) : (
         <p
-          className={`schedule-route__notice${state === 'disrupted' ? ' schedule-route__notice--disrupted' : ''}`}
-          role={state === 'disrupted' ? 'alert' : undefined}
+          className="schedule-route__notice"
         >
           {routeStatus?.message ?? (state === 'seasonal-closure' ? 'Not operating this season' : 'Status unavailable')}
         </p>
