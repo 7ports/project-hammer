@@ -19,6 +19,7 @@ export interface FerryStatusResponse {
   reason: string | null;
   message: string | null;
   postedAt: string | null;
+  parsedTimes: string[];
   source: 'live' | 'error';
   history: FerryStatusEvent[];
 }
@@ -40,6 +41,7 @@ router.get('/', (_req: Request, res: Response) => {
       reason: null,
       message: null,
       postedAt: null,
+      parsedTimes: [],
       source: 'error',
       history: [],
     };
@@ -52,6 +54,7 @@ router.get('/', (_req: Request, res: Response) => {
     reason: current.reason,
     message: current.message,
     postedAt: current.postedAt,
+    parsedTimes: current.parsedTimes,
     source: 'live',
     history: ferryStatusMonitor.getHistory(),
   };

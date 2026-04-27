@@ -27,6 +27,11 @@ export interface FerryStatusEvent {
   postedAt: string | null;
   /** ISO timestamp we first detected this status (our clock) */
   detectedAt: string;
+  /**
+   * Departure times extracted from `message`, normalised to HH:MM 24h, sorted
+   * ascending, deduplicated. Empty when no times found or message is null.
+   */
+  parsedTimes: string[];
 }
 
 export type FerryStatusListener = (event: FerryStatusEvent) => void;
@@ -68,6 +73,70 @@ function mapStatusCode(code: number): FerryStatusEvent['status'] {
   if (code === 1) return 'open';
   if (code === 2) return 'alert';
   return 'unknown';
+}
+
+/**
+ * Removes range expressions like "between 8 am and 5 pm" or "from 9:00 to 17:00"
+ * before time extraction so the bounds aren't misread as departures. Stops at
+ * sentence boundaries to avoid over-stripping when the message has multiple
+ * sentences (e.g. "Service from 9 to 5. Departures: 9, 11, 1.").
+ *
+ * Normalises "a.m."/"p.m." to "am"/"pm" first so the dots in those
+ * abbreviations don't confuse the sentence-boundary `[^.!?\n]` character class.
+ */
+function stripTimeRanges(message: string): string {
+  // Normalise dotted AM/PM notation so "8:30 a.m." dots don't trip the regex.
+  let s = message.replace(/\ba\.m\./gi, 'am').replace(/\bp\.m\./gi, 'pm');
+  // "between X (and|until|to|through) Y" — stops at sentence boundary
+  s = s.replace(
+    /\bbetween\b[^.!?\n]*?\b(?:and|until|to|through|–|—|-)\b[^.!?\n]*?(?=[.!?,\n]|$)/gi,
+    '',
+  );
+  // "WORD from X (to|until|through) Y" — requires one word before "from" so
+  // that a sentence starting with "From X to Y" (listing two times) is NOT
+  // stripped.
+  s = s.replace(
+    /\b\w+\s+from\b[^.!?\n]*?\b(?:to|until|through|–|—|-)\b[^.!?\n]*?(?=[.!?,\n]|$)/gi,
+    '',
+  );
+  return s;
+}
+
+export function parseTimesFromMessage(message: string | null): string[] {
+  if (!message) return [];
+
+  // Remove time-range bounds first ("between 8 am and 5 pm" etc) so we
+  // don't mistake them for departure times.
+  const cleaned = stripTimeRanges(message);
+  const results = new Set<string>();
+
+  // 12-hour formats: "9:00 am", "9 am", "9:30 a.m.", "9:00AM", "12:00 PM"
+  const re12h = /\b(\d{1,2})(?::(\d{2}))?\s*([aApP]\.?[mM]\.?)(?!\w)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re12h.exec(cleaned)) !== null) {
+    const hour = parseInt(m[1], 10);
+    const minute = parseInt(m[2] ?? '0', 10);
+    if (hour < 1 || hour > 12 || minute > 59) continue;
+    const period = m[3].replace(/\./g, '').toLowerCase();
+    let h24: number;
+    if (period === 'am') {
+      h24 = hour === 12 ? 0 : hour;
+    } else {
+      h24 = hour === 12 ? 12 : hour + 12;
+    }
+    results.add(`${String(h24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+  }
+
+  // 24-hour formats: "09:00", "13:30", "21:00" — 2-digit hour only, no AM/PM following
+  const re24h = /\b([01]\d|2[0-3]):(\d{2})\b(?!\s*[aApP]\.?[mM]\.?)/g;
+  while ((m = re24h.exec(cleaned)) !== null) {
+    const hour = parseInt(m[1], 10);
+    const minute = parseInt(m[2], 10);
+    if (minute > 59) continue;
+    results.add(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+  }
+
+  return Array.from(results).sort();
 }
 
 function log(level: 'info' | 'warn' | 'error', event: string, fields: Record<string, unknown> = {}): void {
@@ -174,7 +243,7 @@ export class FerryStatusMonitor {
     }
   }
 
-  private _handlePollResult(incoming: Omit<FerryStatusEvent, 'detectedAt'>): void {
+  private _handlePollResult(incoming: Omit<FerryStatusEvent, 'detectedAt' | 'parsedTimes'>): void {
     const prev = this._current;
 
     // Only emit and record if status actually changed (or this is the first poll)
@@ -187,6 +256,7 @@ export class FerryStatusMonitor {
 
     const event: FerryStatusEvent = {
       ...incoming,
+      parsedTimes: parseTimesFromMessage(incoming.message),
       detectedAt: new Date().toISOString(),
     };
 

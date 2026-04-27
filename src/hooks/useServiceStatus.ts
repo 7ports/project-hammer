@@ -9,6 +9,8 @@ interface FerryStatusEvent {
   message: string | null;
   postedAt: string | null;
   detectedAt: string;
+  /** Departure times parsed from the City disruption message (HH:MM 24h). */
+  parsedTimes: string[];
   history?: FerryStatusEvent[];
 }
 
@@ -31,19 +33,30 @@ function mapDisruptionType(reason: string | null): DisruptionType {
 function buildRouteStatuses(ferry: FerryStatusEvent | null): RouteStatus[] {
   return ROUTE_IDS.map((routeId): RouteStatus => {
     if (!ferry || ferry.status === 'unknown') {
-      return { routeId, status: 'unknown', message: null, disruptionType: null };
+      return { routeId, status: 'unknown', message: null, disruptionType: null, parsedTimes: ferry?.parsedTimes ?? [] };
     }
 
     if (ferry.status === 'open') {
-      return { routeId, status: 'operating', message: null, disruptionType: null };
+      return { routeId, status: 'operating', message: null, disruptionType: null, parsedTimes: ferry.parsedTimes ?? [] };
     }
 
-    // alert or closed — terminal-wide disruption applies to all routes
+    if (ferry.status === 'closed') {
+      return {
+        routeId,
+        status: 'suspended',
+        message: ferry.message,
+        disruptionType: mapDisruptionType(ferry.reason),
+        parsedTimes: ferry.parsedTimes ?? [],
+      };
+    }
+
+    // alert — service disrupted but altered schedule may be available via parsedTimes
     return {
       routeId,
       status: 'disrupted',
       message: ferry.message,
       disruptionType: mapDisruptionType(ferry.reason),
+      parsedTimes: ferry.parsedTimes ?? [],
     };
   });
 }
@@ -106,6 +119,7 @@ export function useServiceStatus(): ServiceStatusResult {
       message: e.message,
       postedAt: e.postedAt,
       detectedAt: e.detectedAt,
+      parsedTimes: e.parsedTimes ?? [],
     })),
   };
 }
