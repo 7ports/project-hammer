@@ -69,3 +69,41 @@ describe('parseTimesFromMessage', () => {
     expect(result).toEqual(['08:00', '12:00', '16:00']);
   });
 });
+
+describe('parseTimesFromMessage — range expressions', () => {
+  it('returns [] for the actual live City Beltline message (between...until with a.m./p.m.)', () => {
+    const live =
+      "Due to ongoing shoreside infrastructure upgrades, Centre Island and Hanlan's Point will operate on a Beltline schedule. A single departing ferry from the city will service both Centre Island and Hanlan's Point on each trip between 8:30 a.m. until 9:15 p.m.";
+    expect(parseTimesFromMessage(live)).toEqual([]);
+  });
+
+  it('returns [] for "Service runs from 9:00 am to 5:00 pm"', () => {
+    expect(parseTimesFromMessage('Service runs from 9:00 am to 5:00 pm')).toEqual([]);
+  });
+
+  it('returns [] for "Departures between 8 am and 10 pm"', () => {
+    expect(parseTimesFromMessage('Departures between 8 am and 10 pm')).toEqual([]);
+  });
+
+  it('returns [] for "Open from 09:00 to 17:00"', () => {
+    expect(parseTimesFromMessage('Open from 09:00 to 17:00')).toEqual([]);
+  });
+
+  it('strips range from first sentence but preserves departure times in second sentence', () => {
+    const result = parseTimesFromMessage('Service from 9 to 5. Departures: 10 am, 12 pm, 2 pm');
+    expect(result).toEqual(['10:00', '12:00', '14:00']);
+  });
+
+  it('does NOT strip bare "and" — "Service at 9 am and 9:30 am only" returns both times', () => {
+    expect(parseTimesFromMessage('Service at 9 am and 9:30 am only')).toEqual(['09:00', '09:30']);
+  });
+
+  it('returns all times when no range words present', () => {
+    expect(parseTimesFromMessage('Departures at 9 am, 11 am, 1 pm, 3 pm')).toEqual([
+      '09:00',
+      '11:00',
+      '13:00',
+      '15:00',
+    ]);
+  });
+});
