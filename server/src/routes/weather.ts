@@ -13,28 +13,9 @@
  */
 
 import { Router, Request, Response } from 'express';
+import type { WeatherObservation } from '../lib/types';
 
 export const weatherRouter = Router();
-
-// ---------------------------------------------------------------------------
-// WeatherObservation — the shape we return to clients
-// ---------------------------------------------------------------------------
-
-interface WeatherObservation {
-  stationName: string;
-  observedAt: string;
-  temperatureCelsius: number | null;
-  feelsLikeCelsius: number | null;
-  windSpeedKmh: number | null;
-  windDirectionDeg: number | null;
-  windGustKmh: number | null;
-  relativeHumidityPct: number | null;
-  visibilityKm: number | null;
-  pressureKpa: number | null;
-  presentWeatherCode: string | null;
-  condition: string;
-  precipitationWarning: boolean;
-}
 
 // ---------------------------------------------------------------------------
 // In-memory cache
@@ -62,43 +43,73 @@ const UPSTREAM_URL =
   '?bbox=-79.42,43.61,-79.37,43.64&limit=1&f=json';
 
 // ---------------------------------------------------------------------------
-// WMO present-weather code mapping
+// Observation-derived condition
 // ---------------------------------------------------------------------------
 
-function codeToCondition(code: number): string {
-  if (code <= 3) return code <= 1 ? 'Clear' : 'Partly Cloudy';
-  if (code <= 9) return 'Haze/Dust';
-  if (code === 10) return 'Mist';
-  if (code <= 12) return 'Drizzle';
-  if (code === 13) return 'Lightning';
-  if (code <= 16) return 'Drizzle';
-  if (code <= 19) return 'Thunderstorm';
-  if (code <= 21) return 'Drizzle';
-  if (code <= 23) return 'Snow';
-  if (code === 24) return 'Freezing Drizzle';
-  if (code <= 26) return 'Rain Shower';
-  if (code <= 28) return 'Hail Shower';
-  if (code === 29) return 'Thunderstorm';
-  if (code <= 35) return 'Dust/Sandstorm';
-  if (code <= 39) return 'Snow Drift';
-  if (code <= 49) return 'Fog';
-  if (code <= 59) return 'Drizzle';
-  if (code <= 69) return 'Rain';
-  if (code <= 79) return 'Snow';
-  if (code <= 89) return 'Rain Shower';
-  if (code <= 99) return 'Thunderstorm';
-  // ECCC proprietary codes (100–399)
-  if (code >= 100 && code <= 199) return 'Rain';
-  if (code >= 200 && code <= 299) return 'Drizzle';
-  if (code >= 300 && code <= 399) return 'Drizzle';
-  return 'Unknown';
-}
+/**
+ * Derive a user-facing condition string from real observations rather than
+ * trusting any single upstream code. The upstream feed (NAV CANADA AWOS) emits
+ * `prsnt_wx_1` values outside the WMO 4677 synoptic range (e.g. 300), so a
+ * single-code lookup is unreliable and was the source of consistently wrong
+ * labels. Observations (precipitation amount, cloud cover, visibility,
+ * temperature) are the authoritative signals.
+ *
+ * The one narrow exception is WMO thunder codes (17, 29, 95–99) — these are
+ * unambiguous and observations have no other thunder signal.
+ */
+function deriveCondition(args: {
+  tempC: number | null;
+  precipLastHourMm: number | null;
+  cloudOktas: number | null;
+  visibilityKm: number | null;
+  presentWeatherCode: number | null;
+}): { condition: string; precipitationWarning: boolean } {
+  const { tempC, precipLastHourMm, cloudOktas, visibilityKm, presentWeatherCode } = args;
 
-function isPrecipitation(code: number): boolean {
-  if (code >= 11 && code <= 16) return true;
-  if (code >= 20 && code <= 26) return true;
-  if (code >= 50 && code <= 99) return true;
-  return false;
+  if (
+    presentWeatherCode !== null &&
+    (presentWeatherCode === 17 ||
+      presentWeatherCode === 29 ||
+      (presentWeatherCode >= 95 && presentWeatherCode <= 99))
+  ) {
+    return { condition: 'Thunderstorm', precipitationWarning: true };
+  }
+
+  if (precipLastHourMm !== null && precipLastHourMm > 0) {
+    const isFreezing = tempC !== null && tempC <= 0;
+    if (precipLastHourMm > 5) {
+      return {
+        condition: isFreezing ? 'Heavy Snow' : 'Heavy Rain',
+        precipitationWarning: true,
+      };
+    }
+    if (precipLastHourMm > 0.5) {
+      return {
+        condition: isFreezing ? 'Snow' : 'Rain',
+        precipitationWarning: true,
+      };
+    }
+    return {
+      condition: isFreezing ? 'Light Snow' : 'Drizzle',
+      precipitationWarning: true,
+    };
+  }
+
+  if (visibilityKm !== null && visibilityKm < 1) {
+    return { condition: 'Fog', precipitationWarning: false };
+  }
+  if (visibilityKm !== null && visibilityKm < 5) {
+    return { condition: 'Mist/Haze', precipitationWarning: false };
+  }
+
+  if (cloudOktas !== null) {
+    if (cloudOktas >= 7) return { condition: 'Overcast', precipitationWarning: false };
+    if (cloudOktas >= 5) return { condition: 'Mostly Cloudy', precipitationWarning: false };
+    if (cloudOktas >= 3) return { condition: 'Partly Cloudy', precipitationWarning: false };
+    if (cloudOktas >= 1) return { condition: 'Mostly Clear', precipitationWarning: false };
+  }
+
+  return { condition: 'Clear', precipitationWarning: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -166,6 +177,10 @@ interface GeoMetProperties {
   max_wind_spd?: number | string | null;
   mslp?: number | string | null;
   present_weather?: number | string | null;
+  dew_point?: number | string | null;
+  cloud_amount?: number | string | null;
+  precip_1h?: number | string | null;
+  precip_24h?: number | string | null;
   data_present_flag?: {
     observations?: GeoMetObservationItem[];
   };
@@ -201,6 +216,7 @@ function parseObservations(props: GeoMetProperties): Record<string, number | nul
   const flatKeys = [
     'air_temp', 'wind_spd', 'wind_dir', 'rel_hum',
     'visibility', 'max_wind_spd', 'mslp', 'present_weather',
+    'dew_point', 'cloud_amount', 'precip_1h', 'precip_24h',
   ] as const;
   for (const key of flatKeys) {
     const v = props[key];
@@ -214,10 +230,15 @@ function parseObservations(props: GeoMetProperties): Record<string, number | nul
   const realFieldAliases: Array<[string, string]> = [
     ['avg_wnd_spd_10m_pst2mts', 'wind_spd'],
     ['avg_wnd_spd_10m_pst10mts', 'wind_spd'],
+    ['avg_wnd_dir_10m_pst2mts', 'wind_dir'],
     ['avg_wnd_dir_10m_pst10mts', 'wind_dir'],
     ['max_wnd_gst_spd_10m_pst10mts', 'max_wind_spd'],
     ['prsnt_wx_1', 'present_weather'],
     ['avg_vis_pst10mts', 'visibility'],
+    ['dwpt_temp', 'dew_point'],
+    ['cld_amt_code_1', 'cloud_amount'],
+    ['pcpn_amt_pst1hr', 'precip_1h'],
+    ['pcpn_amt_pst24hrs', 'precip_24h'],
   ];
   for (const [realKey, shortKey] of realFieldAliases) {
     if (result[shortKey] === undefined) {
@@ -231,7 +252,7 @@ function parseObservations(props: GeoMetProperties): Record<string, number | nul
   return result;
 }
 
-function transformGeoMet(raw: unknown): WeatherObservation {
+export function transformGeoMet(raw: unknown): WeatherObservation {
   const fallback: WeatherObservation = {
     stationName: 'Billy Bishop Toronto City A',
     observedAt: new Date().toISOString(),
@@ -243,6 +264,10 @@ function transformGeoMet(raw: unknown): WeatherObservation {
     relativeHumidityPct: null,
     visibilityKm: null,
     pressureKpa: null,
+    dewPointCelsius: null,
+    cloudAmountOktas: null,
+    precipitationLastHourMm: null,
+    precipitationLast24hMm: null,
     presentWeatherCode: null,
     condition: 'Unknown',
     precipitationWarning: false,
@@ -266,6 +291,11 @@ function transformGeoMet(raw: unknown): WeatherObservation {
   const tempC = obs['air_temp'] ?? null;
   const windKmh = obs['wind_spd'] ?? null;
   const relHum = obs['rel_hum'] ?? null;
+  const visibilityKm = obs['visibility'] ?? null;
+  const cloudOktas = obs['cloud_amount'] ?? null;
+  const precip1h = obs['precip_1h'] ?? null;
+  const precip24h = obs['precip_24h'] ?? null;
+  const dewPointC = obs['dew_point'] ?? null;
 
   // Compute feels-like: wind chill when cold, humidex when warm
   let feelsLike: number | null = tempC;
@@ -278,10 +308,15 @@ function transformGeoMet(raw: unknown): WeatherObservation {
     if (hx !== null) feelsLike = hx;
   }
 
-  const weatherCode = obs['present_weather'];
-  const codeNum = weatherCode !== null ? Math.floor(weatherCode) : null;
-  const condition = codeNum !== null ? codeToCondition(codeNum) : 'Unknown';
-  const precipitationWarning = codeNum !== null ? isPrecipitation(codeNum) : false;
+  const rawWeatherCode = obs['present_weather'] ?? null;
+  const codeNum = rawWeatherCode !== null ? Math.floor(rawWeatherCode) : null;
+  const { condition, precipitationWarning } = deriveCondition({
+    tempC,
+    precipLastHourMm: precip1h,
+    cloudOktas,
+    visibilityKm,
+    presentWeatherCode: codeNum,
+  });
 
   // mslp from GeoMet is in hPa; convert to kPa
   const mslpHpa = obs['mslp'] ?? null;
@@ -304,9 +339,13 @@ function transformGeoMet(raw: unknown): WeatherObservation {
     windDirectionDeg: obs['wind_dir'] ?? null,
     windGustKmh: obs['max_wind_spd'] ?? null,
     relativeHumidityPct: relHum,
-    visibilityKm: obs['visibility'] ?? null,
+    visibilityKm,
     pressureKpa,
-    presentWeatherCode: weatherCode !== null ? String(weatherCode) : null,
+    dewPointCelsius: dewPointC,
+    cloudAmountOktas: cloudOktas,
+    precipitationLastHourMm: precip1h,
+    precipitationLast24hMm: precip24h,
+    presentWeatherCode: rawWeatherCode !== null ? String(rawWeatherCode) : null,
     condition,
     precipitationWarning,
   };
