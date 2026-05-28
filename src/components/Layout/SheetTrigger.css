@@ -1,0 +1,75 @@
+/* ============================================================
+   SheetTrigger — 72x72 FAB, bottom-right, mobile-only
+   Hidden at ≥1024px. Honours safe-area-inset.
+   ============================================================ */
+
+.sheet-trigger {
+  position: fixed;
+  right: calc(var(--space-4) + env(safe-area-inset-right));
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  z-index: var(--z-overlay);
+
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+
+  /* Reset */
+  appearance: none;
+  padding: 0;
+  margin: 0;
+
+  /* Glassmorphism surface */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--accent-cyan-dim);
+  box-shadow: var(--shadow-lg);
+
+  color: var(--accent-cyan);
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 150ms ease, background 150ms ease,
+    border-color 150ms ease;
+}
+
+.sheet-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent-cyan);
+}
+
+.sheet-trigger:active {
+  transform: scale(0.96);
+}
+
+.sheet-trigger:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+}
+
+.sheet-trigger__icon {
+  font-size: 24px;
+  line-height: 1;
+  display: inline-block;
+  transition: opacity 200ms ease;
+}
+
+/* Hide on desktop — desktop has the right-side panel + .panel-toggle-btn */
+@media (min-width: 1024px) {
+  .sheet-trigger {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-trigger,
+  .sheet-trigger__icon {
+    transition: none;
+  }
+  .sheet-trigger:active {
+    transform: none;
+  }
+}

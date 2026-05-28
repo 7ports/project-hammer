@@ -58,7 +58,14 @@ function AppContent() {
           <ThemeSwitcher />
         </>
       }
-      panelSlot={<PanelShell vessel={selectedVessel} />}
+      panelSlot={({ isSheetOpen, setSheetOpen, sheetId }) => (
+        <PanelShell
+          vessel={selectedVessel}
+          isExpanded={isSheetOpen}
+          onExpandedChange={setSheetOpen}
+          sheetId={sheetId}
+        />
+      )}
     />
   );
 }
