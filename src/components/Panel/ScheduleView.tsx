@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSchedule } from '../../hooks/useSchedule';
+import { useScheduleScrub, type UseScheduleScrubResult } from '../../hooks/useScheduleScrub';
 import { useServiceStatus } from '../../hooks/useServiceStatus';
 import type { RouteId } from '../../types/schedule';
 import type { ServiceState } from '../../types/serviceStatus';
@@ -222,7 +223,8 @@ function RouteRow({ routeId, label }: RouteRowProps) {
 }
 
 export function ScheduleView() {
-  const { activeSeason, loading } = useSchedule();
+  const { activeSeason, loading, schedule } = useSchedule();
+  const scrub = useScheduleScrub(schedule, []);
 
   const seasonBadge = !loading && activeSeason ? (
     <div className="schedule-view__season">
@@ -237,9 +239,48 @@ export function ScheduleView() {
     <section className="schedule-view" aria-label="Ferry departure schedule">
       <h3 className="schedule-view__title">Departures</h3>
       {seasonBadge}
+      <ScheduleScrubBar scrub={scrub} />
       {ROUTE_DISPLAY.map(({ id, label }) => (
         <RouteRow key={id} routeId={id} label={label} />
       ))}
     </section>
+  );
+}
+
+interface ScheduleScrubBarProps {
+  scrub: UseScheduleScrubResult;
+}
+
+function ScheduleScrubBar({ scrub }: ScheduleScrubBarProps) {
+  const offsetLabel = scrub.isLive
+    ? 'Live'
+    : `Preview ${scrub.scrubOffsetMin > 0 ? '+' : ''}${scrub.scrubOffsetMin}m`;
+  return (
+    <div className="schedule-scrub" aria-label="Schedule timeline scrubber">
+      <label htmlFor="schedule-scrub-slider" className="schedule-scrub__label">
+        {offsetLabel}
+      </label>
+      <input
+        id="schedule-scrub-slider"
+        type="range"
+        min={-60}
+        max={60}
+        step={5}
+        value={scrub.scrubOffsetMin}
+        onChange={(e) => scrub.setScrubOffsetMin(Number(e.target.value))}
+        aria-label="Scrub schedule timeline"
+        className="schedule-scrub__slider"
+      />
+      {!scrub.isLive && (
+        <button
+          type="button"
+          onClick={scrub.reset}
+          className="schedule-scrub__reset"
+          aria-label="Reset schedule scrubber to live"
+        >
+          Reset
+        </button>
+      )}
+    </div>
   );
 }

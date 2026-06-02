@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Marker, Popup } from 'react-map-gl/maplibre';
+import { useDockHover } from '../../hooks/useDockHover';
 import { DOCK_LOCATIONS } from '../../lib/docks';
 import type { DockLocation } from '../../lib/docks';
 import { VESSEL_NAMES } from '../../lib/constants';
@@ -14,7 +14,7 @@ interface DockMarkersProps {
 }
 
 export function DockMarkers({ vessels }: DockMarkersProps) {
-  const [activeDockId, setActiveDockId] = useState<string | null>(null);
+  const { hoveredDockId: activeDockId, setHoveredDock: setActiveDockId } = useDockHover(vessels);
   const { upcomingDepartures } = useSchedule();
 
   const activeDock = DOCK_LOCATIONS.find((d) => d.id === activeDockId) ?? null;
