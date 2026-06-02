@@ -33,6 +33,22 @@ export {
   type FerryEventSource,
 } from './ingest';
 export { runScheduleSnapshot, type ScheduleSnapshotResult } from './scheduleSnapshot';
+export {
+  startRollupJobs,
+  runDailyRollup,
+  runWeeklyVacuum,
+  computeDailyRollup,
+  utcDateString,
+  utcDayBoundaries,
+  yesterdayUtcDateString,
+  msUntilNextDaily,
+  msUntilNextWeekly,
+  type DailyRollupRow,
+  type RollupJobsHandle,
+  type RunDailyRollupResult,
+  type StartRollupJobsOptions,
+  type VacuumResult,
+} from './rollups';
 
 let dbInstance: DatabaseType | null = null;
 
