@@ -15,8 +15,24 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { runMigrations } from './migrations';
 
-export { PositionWriter, type PositionRow, type PositionWriterOptions } from './writer';
+export {
+  PositionWriter,
+  FerryEventWriter,
+  ProviderStateWriter,
+  type PositionRow,
+  type PositionWriterOptions,
+  type FerryEventRow,
+  type ProviderStateRow,
+} from './writer';
 export { SCHEMA_VERSION } from './schema';
+export {
+  attachIngest,
+  type AttachIngestOptions,
+  type IngestHandle,
+  type PositionSource,
+  type FerryEventSource,
+} from './ingest';
+export { runScheduleSnapshot, type ScheduleSnapshotResult } from './scheduleSnapshot';
 
 let dbInstance: DatabaseType | null = null;
 
