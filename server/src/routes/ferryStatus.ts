@@ -19,6 +19,8 @@ export interface FerryStatusResponse {
   reason: string | null;
   message: string | null;
   postedAt: string | null;
+  /** When this server last detected the status (ISO 8601). Drives the "data freshness" indicator. */
+  detectedAt: string;
   parsedTimes: string[];
   source: 'live' | 'error';
   history: FerryStatusEvent[];
@@ -41,6 +43,7 @@ router.get('/', (_req: Request, res: Response) => {
       reason: null,
       message: null,
       postedAt: null,
+      detectedAt: new Date().toISOString(),
       parsedTimes: [],
       source: 'error',
       history: [],
@@ -54,6 +57,7 @@ router.get('/', (_req: Request, res: Response) => {
     reason: current.reason,
     message: current.message,
     postedAt: current.postedAt,
+    detectedAt: current.detectedAt,
     parsedTimes: current.parsedTimes,
     source: 'live',
     history: ferryStatusMonitor.getHistory(),

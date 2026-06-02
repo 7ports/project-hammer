@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { Vessel } from '../../types/vessel';
+import type { DisruptionType } from '../../types/serviceStatus';
 import { useServiceStatus } from '../../hooks/useServiceStatus';
+import { useAisStatus } from '../../hooks/useAisStatus';
+import { useRelativeTime } from '../../hooks/useRelativeTime';
 import { VesselCard } from './VesselCard';
 import { ScheduleView } from './ScheduleView';
 import { TicketCard } from './TicketCard';
@@ -19,8 +22,46 @@ export interface PanelShellProps {
   onExpandedChange?: (open: boolean) => void;
   /** DOM id for aria-controls wiring from an external trigger (FAB). */
   sheetId?: string;
-  onVesselSelect?: never; // reserved — not used yet
 }
+
+// ---------------------------------------------------------------------------
+// Provider attribution — derived from /api/ais/status active provider name
+// ---------------------------------------------------------------------------
+
+interface ProviderAttribution {
+  label: string;
+  href: string;
+}
+
+const PROVIDER_ATTRIBUTIONS: Record<string, ProviderAttribution> = {
+  aisstream: { label: 'aisstream.io', href: 'https://aisstream.io' },
+  aprsfi:    { label: 'aprs.fi',     href: 'https://aprs.fi' },
+  vesselapi: { label: 'vesselapi',   href: 'https://www.vesselfinder.com' },
+};
+
+function resolveAttribution(active: string | null | undefined): ProviderAttribution {
+  if (active && PROVIDER_ATTRIBUTIONS[active]) return PROVIDER_ATTRIBUTIONS[active];
+  // Fallback to the historical attribution if no provider info has loaded yet
+  return PROVIDER_ATTRIBUTIONS.aprsfi;
+}
+
+// ---------------------------------------------------------------------------
+// Disruption icons
+// ---------------------------------------------------------------------------
+
+const DISRUPTION_ICONS: Record<DisruptionType, string> = {
+  weather:    '⛈',  // ⛈
+  mechanical: '⚙',  // ⚙
+  accident:   '⚠',  // ⚠
+  other:      '⚠',  // ⚠
+};
+
+const DISRUPTION_LABELS: Record<DisruptionType, string> = {
+  weather:    'Weather',
+  mechanical: 'Mechanical',
+  accident:   'Accident',
+  other:      'Service alert',
+};
 
 // ---------------------------------------------------------------------------
 // Disruption banner
@@ -30,18 +71,55 @@ const BANNER_TRUNCATE_THRESHOLD = 120;
 
 interface DisruptionBannerProps {
   message: string;
+  disruptionType: DisruptionType | null;
+  outagePostedAt: string | null;
+  outageReason: string | null;
   onDismiss: () => void;
 }
 
-function DisruptionBanner({ message, onDismiss }: DisruptionBannerProps) {
+function DisruptionBanner({
+  message,
+  disruptionType,
+  outagePostedAt,
+  outageReason,
+  onDismiss,
+}: DisruptionBannerProps) {
   // Strip any residual HTML tags that may have come through from ferry.json comments
   const cleanMessage = message.replace(/<[^>]*>/g, '');
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const canTruncate = cleanMessage.length > BANNER_TRUNCATE_THRESHOLD;
 
+  const icon = disruptionType ? DISRUPTION_ICONS[disruptionType] : '⚠';
+  const typeLabel = disruptionType ? DISRUPTION_LABELS[disruptionType] : null;
+  // Prefer the City's explicit reason headline; fall back to the inferred type label.
+  const reasonHeadline = outageReason ?? typeLabel;
+  const postedRelative = useRelativeTime(outagePostedAt ? new Date(outagePostedAt) : null);
+
   return (
     <div className="disruption-banner" role="alert" aria-live="polite">
+      <span
+        className="disruption-banner__icon"
+        aria-hidden="true"
+        title={typeLabel ?? 'Service alert'}
+      >
+        {icon}
+      </span>
       <div className="disruption-banner__body">
+        {(reasonHeadline || outagePostedAt) && (
+          <div className="disruption-banner__meta">
+            {reasonHeadline && (
+              <span className="disruption-banner__reason">{reasonHeadline}</span>
+            )}
+            {outagePostedAt && postedRelative && (
+              <span
+                className="disruption-banner__posted-at"
+                title={`Posted by City of Toronto at ${new Date(outagePostedAt).toLocaleString()}`}
+              >
+                · posted {postedRelative}
+              </span>
+            )}
+          </div>
+        )}
         <span
           className={
             canTruncate && !isExpanded
@@ -127,7 +205,10 @@ export function PanelShell({
   sheetId = 'ferry-panel-sheet',
 }: PanelShellProps) {
   const serviceStatus = useServiceStatus();
+  const aisStatus = useAisStatus();
   const isDesktop = useIsDesktop();
+
+  const attribution = resolveAttribution(aisStatus?.activeProvider);
 
   // Mobile sheet state — controlled by parent if props provided, otherwise local fallback
   const [internalExpanded, setInternalExpanded] = useState<boolean>(false);
@@ -164,6 +245,9 @@ export function PanelShell({
       {bannerVisible && (
         <DisruptionBanner
           message={disruptionMessage as string}
+          disruptionType={firstDisrupted?.disruptionType ?? null}
+          outagePostedAt={serviceStatus.outagePostedAt}
+          outageReason={serviceStatus.outageReason}
           onDismiss={handleDismissBanner}
         />
       )}
@@ -197,14 +281,14 @@ export function PanelShell({
       </div>
 
       <div className="panel-shell__attribution">
-        AIS fallback data:{' '}
+        AIS via{' '}
         <a
-          href="https://aprs.fi"
+          href={attribution.href}
           target="_blank"
           rel="noopener noreferrer"
           className="panel-shell__attribution-link"
         >
-          aprs.fi
+          {attribution.label}
         </a>
       </div>
     </>

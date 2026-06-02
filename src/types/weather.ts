@@ -1,3 +1,5 @@
+export type WeatherCacheStatus = 'hit' | 'miss' | 'stale';
+
 export interface WeatherObservation {
   stationName: string;
   observedAt: string; // ISO 8601 UTC

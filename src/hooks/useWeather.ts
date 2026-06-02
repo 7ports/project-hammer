@@ -1,19 +1,27 @@
 import { useState, useEffect } from 'react';
-import type { WeatherObservation } from '../types/weather';
+import type { WeatherObservation, WeatherCacheStatus } from '../types/weather';
 import { config } from '../lib/config';
 
 export interface UseWeatherResult {
   weather: WeatherObservation | null;
   loading: boolean;
   error: string | null;
+  /** X-Cache header from `/api/weather` — `stale` indicates upstream was unreachable. */
+  cacheStatus: WeatherCacheStatus | null;
 }
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+function parseCacheHeader(raw: string | null): WeatherCacheStatus | null {
+  if (raw === 'hit' || raw === 'miss' || raw === 'stale') return raw;
+  return null;
+}
 
 export function useWeather(): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherObservation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cacheStatus, setCacheStatus] = useState<WeatherCacheStatus | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,9 +30,11 @@ export function useWeather(): UseWeatherResult {
       try {
         const res = await fetch(`${config.apiUrl}/api/weather`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const headerStatus = parseCacheHeader(res.headers.get('x-cache'));
         const data = (await res.json()) as WeatherObservation;
         if (!cancelled) {
           setWeather(data);
+          setCacheStatus(headerStatus);
           setError(null);
           setLoading(false);
         }
@@ -45,5 +55,5 @@ export function useWeather(): UseWeatherResult {
     };
   }, []);
 
-  return { weather, loading, error };
+  return { weather, loading, error, cacheStatus };
 }

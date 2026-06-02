@@ -7,15 +7,18 @@ export function formatRelativeTime(date: Date): string {
   return `${Math.floor(diffSeconds / 3600)}h ago`;
 }
 
-export function useRelativeTime(date: Date): string {
-  const [display, setDisplay] = useState(() => formatRelativeTime(date));
+export function useRelativeTime(date: Date): string;
+export function useRelativeTime(date: Date | null): string | null;
+export function useRelativeTime(date: Date | null): string | null {
+  // Tick counter forces a re-render every 10s; display value is derived from
+  // `date` during render so it stays in sync without setState-in-effect.
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setDisplay(formatRelativeTime(date));
-    }, 10_000);
+    if (!date) return;
+    const id = setInterval(() => setTick(t => t + 1), 10_000);
     return () => clearInterval(id);
   }, [date]);
 
-  return display;
+  return date ? formatRelativeTime(date) : null;
 }

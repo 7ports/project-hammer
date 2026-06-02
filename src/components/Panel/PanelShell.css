@@ -222,12 +222,39 @@
   line-height: 1.5;
 }
 
+.disruption-banner__icon {
+  flex-shrink: 0;
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  margin-top: 1px;
+}
+
 .disruption-banner__body {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
+}
+
+.disruption-banner__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+}
+
+.disruption-banner__reason {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.disruption-banner__posted-at {
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .disruption-banner__message {

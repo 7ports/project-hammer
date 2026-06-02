@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRelativeTime } from '../../hooks/useRelativeTime';
 import { VESSEL_NAMES } from '../../lib/constants';
 import type { Vessel } from '../../types/vessel';
+import { DestinationDebug } from './DestinationDebug';
 import './VesselCard.css';
 
 interface VesselCardProps {
@@ -123,12 +124,24 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
           </>
         )}
         {vessel.status === 'offline' && (
-          <div className="vessel-card__dock-row">
-            <dt className="vessel-card__dock-label">LAST SEEN</dt>
-            <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
-          </div>
+          <>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">LAST SEEN</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            {vessel.nextDepartureAt && (
+              <div className="vessel-card__dock-row">
+                <dt className="vessel-card__dock-label">NEXT DEP</dt>
+                <dd className="vessel-card__dock-value">
+                  {formatShortTime(vessel.nextDepartureAt)}
+                </dd>
+              </div>
+            )}
+          </>
         )}
       </dl>
+
+      <DestinationDebug vessel={vessel} />
 
       <div className="vessel-card__status">
         <span
