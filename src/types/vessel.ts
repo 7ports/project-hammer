@@ -12,4 +12,8 @@ export interface Vessel extends VesselPosition {
   departedFrom?: DockLocation;
   /** ISO timestamp of next scheduled departure from nearestDock */
   nextDepartureAt?: string;
+  /** Inference confidence 0..1 (only set when destination inferred via v1 algorithm) */
+  destinationConfidence?: number;
+  /** Per-candidate reason tags for debug overlay */
+  destinationReasons?: string[];
 }
