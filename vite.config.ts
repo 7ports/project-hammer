@@ -91,6 +91,8 @@ export default defineConfig({
   test: {
     // Only run frontend tests — server/ has its own vitest config
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    environment: 'jsdom',
+    setupFiles: ['src/test/setup.ts'],
   },
   envPrefix: ['VITE_'],
   server: {

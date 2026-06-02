@@ -135,6 +135,37 @@
 }
 
 /* ============================================================
+   Stats nav button — opens the analytics page
+   ============================================================ */
+
+.stats-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-nav-btn:hover,
+.stats-nav-btn:focus-visible {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  outline: none;
+}
+
+/* ============================================================
    ConnectionIndicator
    Glassmorphism pill — sits inside .app-shell__overlay
    ============================================================ */
