@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import {
+  useLlmDisruptionNarrative,
+  type DisruptionPayload,
+} from '../../hooks/useLlmDisruptionNarrative';
 import './OutageBanner.css';
 
 interface OutageEvent {
@@ -15,6 +19,8 @@ interface OutageBannerProps {
   reason: string | null;
   postedAt: string | null;
   history: OutageEvent[];
+  /** Parsed altered-schedule times from the City message (HH:MM 24h). */
+  parsedTimes?: string[];
 }
 
 function formatTime(iso: string | null): string {
@@ -45,8 +51,23 @@ function formatDateTime(iso: string | null): string {
   }
 }
 
-export function OutageBanner({ status, message, reason, postedAt, history }: OutageBannerProps) {
+export function OutageBanner({ status, message, reason, postedAt, history, parsedTimes }: OutageBannerProps) {
   const [expanded, setExpanded] = useState(false);
+
+  // Build the LLM-narrative payload only when the disruption is active.
+  // useMemo keeps the hook input referentially stable so we don't refetch
+  // on every parent re-render.
+  const disruption = useMemo<DisruptionPayload | null>(() => {
+    if (status !== 'alert' && status !== 'closed') return null;
+    return {
+      status,
+      reason,
+      message,
+      parsedTimes: parsedTimes ?? [],
+      postedAt,
+    };
+  }, [status, reason, message, parsedTimes, postedAt]);
+  const llm = useLlmDisruptionNarrative(disruption);
 
   // Only show for active outages
   if (!status || status === 'open' || status === 'unknown') return null;
@@ -70,6 +91,14 @@ export function OutageBanner({ status, message, reason, postedAt, history }: Out
           </span>
           {message && (
             <p className="outage-service-banner__message">{message}</p>
+          )}
+          {llm.narrative && (
+            <p
+              className="outage-service-banner__narrative"
+              aria-label="AI-generated explanation"
+            >
+              {llm.narrative}
+            </p>
           )}
           {postedAt && (
             <span className="outage-service-banner__time">

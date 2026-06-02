@@ -74,6 +74,11 @@ interface Config {
    * `./data/hammer.db` in development.
    */
   storageDbPath: string;
+  /**
+   * Anthropic API key. When unset, the LLM endpoints return 503 "LLM
+   * disabled" instead of crashing — the rest of the server runs normally.
+   */
+  anthropicApiKey: string | null;
 }
 
 export const config: Config = {
@@ -93,4 +98,5 @@ export const config: Config = {
     'STORAGE_DB_PATH',
     process.env['NODE_ENV'] === 'production' ? '/data/hammer.db' : './data/hammer.db',
   ),
+  anthropicApiKey: process.env['ANTHROPIC_API_KEY'] ?? null,
 };

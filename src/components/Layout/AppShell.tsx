@@ -37,7 +37,14 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot, providerStatus = 'ok
   const aboutBtnRef = useRef<HTMLButtonElement>(null);
   const sheetTriggerRef = useRef<HTMLButtonElement>(null);
   const sheetWasOpenRef = useRef<boolean>(false);
-  const { ferryStatus, outageMessage, outageReason, outagePostedAt, outageHistory } = useServiceStatus();
+  const {
+    ferryStatus,
+    outageMessage,
+    outageReason,
+    outagePostedAt,
+    outageParsedTimes,
+    outageHistory,
+  } = useServiceStatus();
 
   function handleAboutClose() {
     setAboutOpen(false);
@@ -75,6 +82,7 @@ export function AppShell({ mapSlot, overlaySlot, panelSlot, providerStatus = 'ok
         message={outageMessage}
         reason={outageReason}
         postedAt={outagePostedAt}
+        parsedTimes={outageParsedTimes}
         history={outageHistory}
       />
       {providerStatus === 'all-down' && (
