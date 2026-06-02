@@ -218,6 +218,7 @@ export class VesselApiProvider implements IAISProvider {
       cog: isFinite(cog) ? cog : 0,
       speed: isFinite(sog) ? sog : 0,
       timestamp,
+      navStatus: undefined,
     };
   }
 }

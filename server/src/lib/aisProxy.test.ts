@@ -69,6 +69,7 @@ function makeRawMessage(mmsi: number, overrides: {
   cog?: number;
   sog?: number;
   shipName?: string;
+  navigationalStatus?: number;
 } = {}): string {
   return JSON.stringify({
     MessageType: 'PositionReport',
@@ -86,7 +87,7 @@ function makeRawMessage(mmsi: number, overrides: {
         Sog: overrides.sog ?? 5,
         Latitude: 43.63,
         Longitude: -79.38,
-        NavigationalStatus: 0,
+        NavigationalStatus: overrides.navigationalStatus ?? 0,
       },
     },
   });
@@ -308,6 +309,29 @@ describe('AISProxy', () => {
     const pos = getLatestPositions().get(mmsi)!;
     expect(() => new Date(pos.timestamp)).not.toThrow();
     expect(new Date(pos.timestamp).toISOString()).toBe(pos.timestamp);
+  });
+
+  // ── navStatus mapping ─────────────────────────────────────────────────────
+
+  it('maps NavigationalStatus from the position report into navStatus (moored = 5)', () => {
+    const mmsi: ValidMMSI = 316045069;
+    emitMessage(makeRawMessage(mmsi, { navigationalStatus: 5 }));
+    const pos = getLatestPositions().get(mmsi)!;
+    expect(pos.navStatus).toBe(5);
+  });
+
+  it('maps NavigationalStatus = 0 (under way using engine) verbatim', () => {
+    const mmsi: ValidMMSI = 316045081;
+    emitMessage(makeRawMessage(mmsi, { navigationalStatus: 0 }));
+    const pos = getLatestPositions().get(mmsi)!;
+    expect(pos.navStatus).toBe(0);
+  });
+
+  it('maps NavigationalStatus = 15 (undefined) verbatim', () => {
+    const mmsi: ValidMMSI = 316045082;
+    emitMessage(makeRawMessage(mmsi, { navigationalStatus: 15 }));
+    const pos = getLatestPositions().get(mmsi)!;
+    expect(pos.navStatus).toBe(15);
   });
 
   // ── ShipName trimming ─────────────────────────────────────────────────────

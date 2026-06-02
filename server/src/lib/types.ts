@@ -27,6 +27,17 @@ export interface VesselPosition {
   speed: number;
   /** ISO 8601 timestamp from the AIS stream. */
   timestamp: string;
+  /**
+   * AIS Navigational Status code (ITU-R M.1371). Only present when the
+   * underlying provider exposes it (aisstream.io does; aprs.fi and vesselapi
+   * do not). Common values used by the ferries:
+   *   0 = under way using engine
+   *   1 = at anchor
+   *   5 = moored
+   *   8 = under way sailing
+   *  15 = undefined / not available
+   */
+  navStatus?: number;
 }
 
 // ---------------------------------------------------------------------------
