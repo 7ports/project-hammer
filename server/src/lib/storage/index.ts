@@ -49,6 +49,35 @@ export {
   type StartRollupJobsOptions,
   type VacuumResult,
 } from './rollups';
+export {
+  getTripsInRange,
+  getTripCounts,
+  getTripDurationQuantiles,
+  getScheduleAdherenceByHourOfWeek,
+  getDockDwell,
+  getVesselUtilization,
+  getDisruptions,
+  getDataQuality,
+  getDockPresenceHeatmap,
+  getTripAnomalies,
+  getDailyRollups,
+  getAnalyticsSummary,
+  quantile,
+  type TripRow,
+  type TripFilter,
+  type TripCountBucket,
+  type TripDurationQuantile,
+  type AdherenceBucket,
+  type DwellStat,
+  type UtilizationRow,
+  type DisruptionEvent,
+  type ProviderTransition,
+  type DataQualitySummary,
+  type DockPresenceCell,
+  type TripAnomaly,
+  type DailyRollupReadRow,
+  type AnalyticsSummary,
+} from './queries';
 
 let dbInstance: DatabaseType | null = null;
 
