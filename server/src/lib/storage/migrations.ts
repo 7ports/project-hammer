@@ -6,7 +6,7 @@
  * next integer. Never edit a shipped migration in place — write a new one.
  */
 import type { Database } from 'better-sqlite3';
-import { SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema';
+import { SCHEMA_STATEMENTS, SCHEMA_V2_STATEMENTS, SCHEMA_VERSION } from './schema';
 
 interface Migration {
   version: number;
@@ -15,6 +15,7 @@ interface Migration {
 
 const MIGRATIONS: readonly Migration[] = [
   { version: 1, statements: SCHEMA_STATEMENTS },
+  { version: 2, statements: SCHEMA_V2_STATEMENTS },
 ];
 
 export function runMigrations(db: Database): { from: number; to: number } {
