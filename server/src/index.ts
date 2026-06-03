@@ -12,6 +12,7 @@ import ferryStatusRouter from './routes/ferryStatus';
 import busynessRouter from './routes/busyness';
 import { aisStatusRouter } from './routes/aisStatus';
 import analyticsRouter from './routes/analytics';
+import llmRouter from './routes/llm';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/ferry-status', ferryStatusRouter);
 app.use('/api/ferry-busyness', busynessRouter);
 app.use('/api/ais/status', aisStatusRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/llm', llmRouter);
 
 export default app;
 
