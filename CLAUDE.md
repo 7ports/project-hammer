@@ -151,9 +151,26 @@ npm start               # node dist/index.js
 - [x] Phase 6: Production hardening (CI fixes, Lighthouse CI, QA smoke test — 73/73 tests)
 - [x] Phase 7: Mobile experience (MobileDrawer bottom-sheet, weather ECCC codes fix, VesselCard SOG/COG/heading, a11y WCAG 2.1 AA)
 - [x] Phase 8: Vessel intelligence (nearest-dock Haversine detection, dock context in VesselCard, NextDeparture map overlay)
+- [x] Phase 9: Analytics & Polish — 14 commits (2026-06-02)
+  - fix(weather): derive condition from AIS observations not raw ECCC code (8922051)
+  - feat(mobile): 72×72 FAB trigger replaces drawer handle (b1d6ccf)
+  - feat(storage): SQLite 5-table schema on Fly.io volume, batched PositionWriter (966db60)
+  - feat(ais): navStatus plumbed from providers through SSE to client (c69d7aa)
+  - feat(vessel): destination inference v1 — schedule + bearing + polyline + hysteresis (899b493)
+  - feat(panel): P0/P1 audit gaps closed (detectedAt, observedAt, visibility, disruption metadata) (b89f124)
+  - feat(storage): AIS positions, ferry events, provider failovers, daily schedule snapshots ingested (9395073)
+  - feat(llm): Claude Haiku summaries for vessels and disruption narratives, token-bucket + cache (4066cd3)
+  - feat(storage): daily position rollups + weekly VACUUM job (97cdffb)
+  - feat(analytics): 10 read-only API endpoints for storage-backed analytics (91a9e8a)
+  - feat(realtime): 3 feedback-loop hooks — vessel focus, dock hover, schedule scrub (c94a2eb)
+  - feat(stats): `?view=stats` analytics page consuming all 10 analytics endpoints (f93de71)
+  - test(integration): URL audit + endpoint smoke test scripts (6d7e801)
+  - test(audit): Lighthouse CI, bundle-size, and a11y gates added (11bed90)
 
 **Known issues / tech debt:**
 - vite-plugin-pwa installed with --legacy-peer-deps (Vite 8 peer dep range)
+- SQLite storage has no Litestream cold tier yet — single Fly volume, durability deferred (see ADR-0001)
+- LLM features gated behind VITE_LLM_FEATURES + ANTHROPIC_API_KEY env vars; off by default
 
 ---
 
