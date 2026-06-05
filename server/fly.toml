@@ -37,8 +37,13 @@ primary_region = "yyz"
 
 [checks]
   [checks.health]
-    port     = 3001
-    type     = "http"
-    path     = "/api/health"
-    interval = "30s"
-    timeout  = "5s"
+    port         = 3001
+    type         = "http"
+    path         = "/api/health"
+    interval     = "30s"
+    timeout      = "5s"
+    # First-boot work on a freshly-formatted /data volume (encrypt + ext4
+    # init + better-sqlite3 binding load + migration) can push the first
+    # listen() past Fly's default 5 s grace. 30 s leaves headroom without
+    # delaying a real failure.
+    grace_period = "30s"
