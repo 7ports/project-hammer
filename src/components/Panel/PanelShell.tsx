@@ -266,7 +266,7 @@ export function PanelShell({
             }}
           />
         ) : (
-          <div className="panel-shell__placeholder" aria-label="No vessel selected">
+          <div className="panel-shell__placeholder" role="status" aria-live="polite" aria-label="No vessel selected">
             Tap a ferry to see details
           </div>
         )}

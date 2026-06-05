@@ -102,7 +102,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         <div className="schedule-route__header">
           <span className="schedule-route__name">{label}</span>
         </div>
-        <div className="schedule-route__skeleton" aria-label="Loading schedule..." />
+        <div className="schedule-route__skeleton" role="status" aria-live="polite" aria-label="Loading schedule..." />
         <div className="schedule-route__skeleton schedule-route__skeleton--sm" />
         <div className="schedule-route__skeleton schedule-route__skeleton--sm" />
       </div>
@@ -164,7 +164,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         </p>
       ) : effectiveState === 'operating' || effectiveState === 'unknown' || effectiveState === 'disrupted' ? (
         <>
-          <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
+          <div className="schedule-route__departures" role="group" aria-label={`Upcoming departures for ${label}`}>
             {departuresToShow.length === 0 ? (
               <p className="schedule-route__notice">No more departures today</p>
             ) : (
@@ -200,6 +200,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
           {effectiveState !== 'disrupted' && routeInSeason && (
             <div
               className="schedule-route__arrival"
+              role="group"
               aria-label={`Next arrival at Jack Layton for ${label}`}
             >
               <span className="schedule-route__arrival-label">↓ Next arrival</span>
@@ -256,7 +257,7 @@ function ScheduleScrubBar({ scrub }: ScheduleScrubBarProps) {
     ? 'Live'
     : `Preview ${scrub.scrubOffsetMin > 0 ? '+' : ''}${scrub.scrubOffsetMin}m`;
   return (
-    <div className="schedule-scrub" aria-label="Schedule timeline scrubber">
+    <div className="schedule-scrub" role="group" aria-label="Schedule timeline scrubber">
       <label htmlFor="schedule-scrub-slider" className="schedule-scrub__label">
         {offsetLabel}
       </label>

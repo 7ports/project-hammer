@@ -64,7 +64,7 @@ export function WeatherStrip() {
 
   if (loading) {
     return (
-      <div className="weather-strip weather-strip--loading" aria-label="Loading weather data">
+      <div className="weather-strip weather-strip--loading" role="status" aria-live="polite" aria-label="Loading weather data">
         <div className="weather-strip__skeleton weather-strip__skeleton--wide" />
         <div className="weather-strip__skeleton weather-strip__skeleton--narrow" />
       </div>
@@ -73,7 +73,7 @@ export function WeatherStrip() {
 
   if (error || !weather) {
     return (
-      <div className="weather-strip weather-strip--error" aria-label="Weather data unavailable">
+      <div className="weather-strip weather-strip--error" role="status" aria-live="polite" aria-label="Weather data unavailable">
         <span className="weather-strip__error-text">Weather unavailable</span>
       </div>
     );
@@ -110,6 +110,8 @@ export function WeatherStrip() {
   return (
     <div
       className={`weather-strip${isStale ? ' weather-strip--stale' : ''}`}
+      role="status"
+      aria-live="polite"
       aria-label={`Weather at ${weather.stationName ?? 'Billy Bishop'}: ${condition}, ${tempRounded !== null ? `${tempRounded} degrees` : 'temperature unknown'}${observedAt ? `, observed at ${observedAt}` : ''}${isStale ? ' (stale data)' : ''}`}
     >
       {/* Icon + condition */}

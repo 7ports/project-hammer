@@ -17,7 +17,7 @@ export function DestinationDebug({ vessel }: DestinationDebugProps) {
   }
 
   return (
-    <div className="destination-debug" aria-label="Debug: destination inference">
+    <div className="destination-debug" role="group" aria-label="Debug: destination inference">
       <div className="destination-debug__title">DEBUG · destination inference</div>
       {vessel.destinationConfidence !== undefined && (
         <div className="destination-debug__row">
