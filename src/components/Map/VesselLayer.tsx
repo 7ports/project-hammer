@@ -7,6 +7,7 @@ import type { MapLayerMouseEvent, GeoJSONSource } from 'maplibre-gl';
 import type { FeatureCollection, Point } from 'geojson';
 import type { Vessel } from '../../types/vessel';
 import { useAnimationFrame } from '../../hooks/useAnimationFrame';
+import { useVesselFocus } from '../../hooks/useVesselFocus';
 
 interface VesselLayerProps {
   vesselPositionsRef: RefObject<Vessel[]>;
@@ -24,6 +25,8 @@ const emptyGeoJSON: FeatureCollection<Point> = { type: 'FeatureCollection', feat
 
 export function VesselLayer({ vesselPositionsRef, selectedMmsi, onVesselClick }: VesselLayerProps) {
   const { current: map } = useMap();
+
+  useVesselFocus({ vesselPositionsRef, focusedMmsi: selectedMmsi });
 
   // Imperatively push vessel positions to MapLibre on every animation frame —
   // bypasses React reconciliation entirely for the hot animation path.

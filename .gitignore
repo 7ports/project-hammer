@@ -46,6 +46,11 @@ infra/.terraform/
 *.db
 .beads-credential-key
 
+# Local SQLite storage (server/data/ in dev; prod uses Fly volume at /data)
+data/
+*.db-wal
+*.db-shm
+
 # ── Voltron managed ─────────────────────────────────────────────
 # Claude Code — machine-specific session settings
 .claude/settings.local.json

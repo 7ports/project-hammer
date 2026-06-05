@@ -1,0 +1,33 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "runners": ["axe", "htmlcs"],
+    "timeout": 30000,
+    "wait": 2500,
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"]
+    },
+    "ignore": [
+      "notice",
+      "warning"
+    ],
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    }
+  },
+  "urls": [
+    {
+      "url": "http://localhost:4173/",
+      "actions": [
+        "wait for element .app-shell to be visible"
+      ]
+    },
+    {
+      "url": "http://localhost:4173/?view=stats",
+      "actions": [
+        "wait for element .stats-page to be visible"
+      ]
+    }
+  ]
+}

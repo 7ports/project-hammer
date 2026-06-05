@@ -1,0 +1,42 @@
+.destination-debug {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.destination-debug__title {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.destination-debug__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.destination-debug__label {
+  opacity: 0.7;
+}
+
+.destination-debug__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.destination-debug__reasons {
+  margin: 0.3rem 0 0;
+  padding-left: 0.9rem;
+  list-style: '· ';
+}
+
+.destination-debug__reason {
+  line-height: 1.35;
+  word-break: break-word;
+}

@@ -43,12 +43,28 @@ function conditionIcon(condition: string): string {
 // WeatherStrip component
 // ---------------------------------------------------------------------------
 
+function formatObservedAt(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function formatVisibility(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
 export function WeatherStrip() {
-  const { weather, loading, error } = useWeather();
+  const { weather, loading, error, cacheStatus } = useWeather();
 
   if (loading) {
     return (
-      <div className="weather-strip weather-strip--loading" aria-label="Loading weather data">
+      <div className="weather-strip weather-strip--loading" role="status" aria-live="polite" aria-label="Loading weather data">
         <div className="weather-strip__skeleton weather-strip__skeleton--wide" />
         <div className="weather-strip__skeleton weather-strip__skeleton--narrow" />
       </div>
@@ -57,7 +73,7 @@ export function WeatherStrip() {
 
   if (error || !weather) {
     return (
-      <div className="weather-strip weather-strip--error" aria-label="Weather data unavailable">
+      <div className="weather-strip weather-strip--error" role="status" aria-live="polite" aria-label="Weather data unavailable">
         <span className="weather-strip__error-text">Weather unavailable</span>
       </div>
     );
@@ -86,10 +102,17 @@ export function WeatherStrip() {
   const windArrow = windDir !== null ? degToArrow(windDir) : '';
   const windCompass = windDir !== null ? degToCompass(windDir) : '';
 
+  const visibilityKm = weather.visibilityKm != null && !isNaN(weather.visibilityKm) ? weather.visibilityKm : null;
+  const visibilityLow = visibilityKm !== null && visibilityKm < 5;
+  const observedAt = weather.observedAt ? formatObservedAt(weather.observedAt) : null;
+  const isStale = cacheStatus === 'stale';
+
   return (
     <div
-      className="weather-strip"
-      aria-label={`Weather at ${weather.stationName ?? 'Billy Bishop'}: ${condition}, ${tempRounded !== null ? `${tempRounded} degrees` : 'temperature unknown'}`}
+      className={`weather-strip${isStale ? ' weather-strip--stale' : ''}`}
+      role="status"
+      aria-live="polite"
+      aria-label={`Weather at ${weather.stationName ?? 'Billy Bishop'}: ${condition}, ${tempRounded !== null ? `${tempRounded} degrees` : 'temperature unknown'}${observedAt ? `, observed at ${observedAt}` : ''}${isStale ? ' (stale data)' : ''}`}
     >
       {/* Icon + condition */}
       <span className="weather-strip__icon" aria-hidden="true">{icon}</span>
@@ -127,6 +150,28 @@ export function WeatherStrip() {
       {weather.precipitationWarning && (
         <span className="weather-strip__precip-badge" role="status" aria-label="Precipitation expected">
           <span aria-hidden="true">&#x2614;</span> Precipitation expected
+        </span>
+      )}
+
+      {/* Visibility — emphasised when low (<5 km), the #1 ferry-disruption signal */}
+      {visibilityKm !== null && (
+        <span
+          className={`weather-strip__visibility${visibilityLow ? ' weather-strip__visibility--low' : ''}`}
+          aria-label={`Visibility ${formatVisibility(visibilityKm)}${visibilityLow ? ', low' : ''}`}
+        >
+          <span aria-hidden="true">&#x1F441;</span> Vis {formatVisibility(visibilityKm)}
+        </span>
+      )}
+
+      {/* Observed-at timestamp + stale-cache hint */}
+      {observedAt && (
+        <span className="weather-strip__observed-at" title={weather.stationName ?? undefined}>
+          {isStale && (
+            <span className="weather-strip__stale-badge" role="status" aria-label="Stale cached data">
+              stale
+            </span>
+          )}
+          <span className="weather-strip__observed-at-label">as of {observedAt}</span>
         </span>
       )}
     </div>

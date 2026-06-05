@@ -90,6 +90,62 @@
   white-space: nowrap;
 }
 
+/* Visibility — informational; emphasised when low */
+.weather-strip__visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.weather-strip__visibility--low {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid rgba(255, 152, 0, 0.35);
+  font-weight: 600;
+}
+
+/* Observed-at timestamp + stale-cache hint */
+.weather-strip__observed-at {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.weather-strip__observed-at-label {
+  font-style: italic;
+}
+
+.weather-strip__stale-badge {
+  display: inline-block;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.18);
+  border: 1px solid rgba(255, 152, 0, 0.4);
+}
+
+.weather-strip--stale .weather-strip__observed-at-label {
+  color: #ff9800;
+}
+
 /* Precipitation warning badge */
 .weather-strip__precip-badge {
   display: inline-flex;

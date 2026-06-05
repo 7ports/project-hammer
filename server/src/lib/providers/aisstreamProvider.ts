@@ -246,6 +246,7 @@ export class AISStreamProvider implements IAISProvider {
       cog: report.Cog,
       speed: report.Sog,
       timestamp: new Date(raw.MetaData.time_utc + ' UTC').toISOString(),
+      navStatus: report.NavigationalStatus,
     };
 
     this._positionsDelivered++;

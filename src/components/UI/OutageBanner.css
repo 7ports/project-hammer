@@ -81,6 +81,19 @@
   font-family: var(--font-mono, monospace);
 }
 
+/* ── LLM-generated narrative ──────────────────────────────── */
+
+.outage-service-banner__narrative {
+  margin: 4px 0 0 0;
+  padding: 6px 8px;
+  font-size: var(--text-xs, 0.75rem);
+  font-style: italic;
+  opacity: 0.92;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm, 4px);
+  word-break: break-word;
+}
+
 /* ── History toggle button ────────────────────────────────── */
 
 .outage-service-banner__toggle {

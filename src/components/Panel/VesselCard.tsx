@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useRelativeTime } from '../../hooks/useRelativeTime';
+import { useLlmVesselSummary } from '../../hooks/useLlmVesselSummary';
 import { VESSEL_NAMES } from '../../lib/constants';
 import type { Vessel } from '../../types/vessel';
+import { DestinationDebug } from './DestinationDebug';
 import './VesselCard.css';
 
 interface VesselCardProps {
@@ -40,6 +42,9 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
   const lastSeen = useRelativeTime(vessel.lastSeen);
   const name = VESSEL_NAMES[vessel.mmsi] ?? vessel.name;
   const [copied, setCopied] = useState(false);
+  // LLM summary — only fetches when the card is expanded (isSelected) AND
+  // the feature flag is on. Hides cleanly when disabled or unavailable.
+  const llm = useLlmVesselSummary(isSelected ? vessel : null);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -123,12 +128,35 @@ export function VesselCard({ vessel, isSelected, onSelect }: VesselCardProps) {
           </>
         )}
         {vessel.status === 'offline' && (
-          <div className="vessel-card__dock-row">
-            <dt className="vessel-card__dock-label">LAST SEEN</dt>
-            <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
-          </div>
+          <>
+            <div className="vessel-card__dock-row">
+              <dt className="vessel-card__dock-label">LAST SEEN</dt>
+              <dd className="vessel-card__dock-value">{vessel.nearestDock.name}</dd>
+            </div>
+            {vessel.nextDepartureAt && (
+              <div className="vessel-card__dock-row">
+                <dt className="vessel-card__dock-label">NEXT DEP</dt>
+                <dd className="vessel-card__dock-value">
+                  {formatShortTime(vessel.nextDepartureAt)}
+                </dd>
+              </div>
+            )}
+          </>
         )}
       </dl>
+
+      <DestinationDebug vessel={vessel} />
+
+      {isSelected && llm.summary && (
+        <p className="vessel-card__llm-summary" aria-label="AI-generated summary">
+          {llm.summary}
+        </p>
+      )}
+      {isSelected && llm.loading && !llm.summary && (
+        <p className="vessel-card__llm-summary vessel-card__llm-summary--loading">
+          Generating summary&hellip;
+        </p>
+      )}
 
       <div className="vessel-card__status">
         <span

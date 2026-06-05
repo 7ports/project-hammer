@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { Vessel } from '../types/vessel';
 import type { VesselPosition } from '../types/ais';
@@ -9,6 +9,11 @@ import { useAnimationFrame } from './useAnimationFrame';
 import { useSchedule } from './useSchedule';
 import { lerpPosition, smoothstep } from '../lib/interpolation';
 import { nearestDock, nearestDockOf, etaMinutesToDock, DOCK_LOCATIONS } from '../lib/docks';
+import { inferDestination, type HysteresisState } from '../lib/destinationInference';
+import { FERRY_ROUTES } from '../lib/ferryRoutes';
+import type { RouteId } from '../types/schedule';
+
+const USE_V0 = import.meta.env.VITE_DESTINATION_INFERENCE_V0 === 'true';
 
 const KNOTS_TO_M_PER_S = 0.514444;
 const METERS_PER_DEG_LAT = 111_320;
@@ -48,12 +53,33 @@ export interface VesselPositionsResult {
 
 export function useVesselPositions(): VesselPositionsResult {
   const { vessels: rawVessels, connectionStatus, providerStatus } = useAISStream();
-  const { upcomingDepartures } = useSchedule();
+  const { upcomingDepartures, departuresInWindow } = useSchedule();
 
   // Keep upcomingDepartures accessible inside the rAF closure without a stale reference
   const upcomingDeparturesRef = useRef(upcomingDepartures);
   useLayoutEffect(() => {
     upcomingDeparturesRef.current = upcomingDepartures;
+  });
+  const departuresInWindowRef = useRef(departuresInWindow);
+  useLayoutEffect(() => {
+    departuresInWindowRef.current = departuresInWindow;
+  });
+
+  const routeGeometries = useMemo<
+    Map<RouteId, ReadonlyArray<readonly [number, number]>>
+  >(() => {
+    const m = new Map<RouteId, ReadonlyArray<readonly [number, number]>>();
+    for (const f of FERRY_ROUTES.features) {
+      m.set(
+        f.properties.id as RouteId,
+        f.geometry.coordinates.map((c) => [c[0], c[1]] as const),
+      );
+    }
+    return m;
+  }, []);
+  const routeGeometriesRef = useRef(routeGeometries);
+  useLayoutEffect(() => {
+    routeGeometriesRef.current = routeGeometries;
   });
 
   const fromRef = useRef<Map<number, VesselPosition>>(new Map());
@@ -66,6 +92,8 @@ export function useVesselPositions(): VesselPositionsResult {
   const prevStatusRef = useRef<Map<number, Vessel['status']>>(new Map());
   // Stores the last confirmed dock position per vessel
   const lastDockedRef = useRef<Map<number, DockLocation>>(new Map());
+  // Inference hysteresis state per vessel (committed/pending destination)
+  const hysteresisRef = useRef<Map<number, HysteresisState>>(new Map());
 
   const interpolatedRef = useRef<Vessel[]>([]);
   const lastStateUpdateRef = useRef<number>(0);
@@ -138,21 +166,69 @@ export function useVesselPositions(): VesselPositionsResult {
       // Departed-from: the dock last seen at, surfaced only while underway
       const departedFrom = status === 'moving' ? lastDockedRef.current.get(mmsi) : undefined;
 
-      // Infer travel destination from departure dock.
-      // Jack Layton (mainland) → nearest island dock; island dock → Jack Layton.
+      // Infer travel destination. v1 = heuristic (schedule + COG + polyline + hysteresis);
+      // v0 fallback (env-gated) = original nearest-dock proximity rule.
       let destination: DockLocation | undefined;
+      let destinationConfidence: number | undefined;
+      let destinationReasons: string[] | undefined;
       if (status === 'moving') {
-        if (departedFrom !== undefined) {
-          if (departedFrom.id === 'jack-layton') {
-            const islandDocks = DOCK_LOCATIONS.filter(d => d.id !== 'jack-layton');
-            destination = nearestDockOf(finalPos.latitude, finalPos.longitude, islandDocks);
+        if (USE_V0) {
+          if (departedFrom !== undefined) {
+            if (departedFrom.id === 'jack-layton') {
+              const islandDocks = DOCK_LOCATIONS.filter(d => d.id !== 'jack-layton');
+              destination = nearestDockOf(finalPos.latitude, finalPos.longitude, islandDocks);
+            } else {
+              destination = DOCK_LOCATIONS.find(d => d.id === 'jack-layton') ?? dock;
+            }
           } else {
-            destination = DOCK_LOCATIONS.find(d => d.id === 'jack-layton') ?? dock;
+            destination = dock;
           }
         } else {
-          // No departure history yet (cold start) — fall back to nearest dock
-          destination = dock;
+          if (departedFrom !== undefined) {
+            const candidates: DockLocation[] = departedFrom.id === 'jack-layton'
+              ? DOCK_LOCATIONS.filter(d => d.id !== 'jack-layton')
+              : DOCK_LOCATIONS.filter(d => d.id === 'jack-layton');
+            const direction: 'outbound' | 'inbound' =
+              departedFrom.id === 'jack-layton' ? 'outbound' : 'inbound';
+
+            const findCandidateDepartures = (candidate: DockLocation): Date[] => {
+              const out: Date[] = [];
+              for (const r of candidate.routes) {
+                if (r.direction !== direction) continue;
+                for (const d of departuresInWindowRef.current(r.routeId, direction, 30, 60)) {
+                  out.push(d);
+                }
+              }
+              return out;
+            };
+
+            const prev = hysteresisRef.current.get(mmsi);
+            const inferred = inferDestination(
+              {
+                pos: {
+                  latitude: finalPos.latitude,
+                  longitude: finalPos.longitude,
+                  cog: finalPos.cog ?? finalPos.heading,
+                  sog: finalPos.sog ?? 0,
+                },
+                departedFrom,
+                candidates,
+                findCandidateDepartures,
+                routeGeometries: routeGeometriesRef.current,
+                now: new Date(now),
+              },
+              prev,
+            );
+            hysteresisRef.current.set(mmsi, inferred.hysteresis);
+            destination = inferred.destination;
+            destinationConfidence = inferred.confidence;
+            destinationReasons = inferred.reasons;
+          } else {
+            destination = dock;
+          }
         }
+      } else {
+        hysteresisRef.current.delete(mmsi);
       }
 
       // ETA to inferred destination (only when moving)
@@ -189,6 +265,8 @@ export function useVesselPositions(): VesselPositionsResult {
         lastSeen: new Date(current.timestamp),
         nearestDock: dock,      // always geometric nearest (for dock popups)
         destination,            // inferred destination (for VesselCard display)
+        destinationConfidence,
+        destinationReasons,
         etaMinutes,
         departedFrom,
         nextDepartureAt,

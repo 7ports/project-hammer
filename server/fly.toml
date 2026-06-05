@@ -23,6 +23,18 @@ primary_region = "yyz"
   size   = "shared-cpu-1x"
   memory = "256mb"
 
+# 3 GB persistent volume for SQLite storage (ais_positions, ferry_events, etc.).
+# Create with: `fly volumes create hammer_data --size 3 --region yyz`.
+# See .voltron/reports/ais-storage.md for the storage architecture.
+# IMPORTANT: pinning to one machine — multi-machine writes to the same volume
+# are not supported. `min_machines_running = 1` above already enforces this.
+[mounts]
+  source      = "hammer_data"
+  destination = "/data"
+
+[env]
+  STORAGE_DB_PATH = "/data/hammer.db"
+
 [checks]
   [checks.health]
     port     = 3001

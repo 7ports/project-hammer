@@ -48,6 +48,24 @@ export interface ProviderManagerOptions {
 
 export type StatusChangeCallback = (status: 'providers-down' | 'providers-up') => void;
 
+export interface FailoverEvent {
+  /** Name of the provider being stopped. */
+  from: string;
+  /** Name of the provider being started after the cooldown. */
+  to: string;
+  /** Why the failover fired (currently always 'silence_timeout'). */
+  reason: 'silence_timeout';
+  /** When the failover was decided (before the cooldown). */
+  timestamp: Date;
+  /**
+   * Failover count after this event (i.e. 1 for the first failover). Matches
+   * the value surfaced in diagnostics so analytics can correlate.
+   */
+  failoverCount: number;
+}
+
+export type FailoverCallback = (event: FailoverEvent) => void;
+
 // Cooldown delays between successive failovers: 60s, 120s, 300s (cap).
 const FAILOVER_COOLDOWNS_MS = [60_000, 120_000, 300_000];
 
@@ -74,6 +92,7 @@ export class AISProviderManager {
 
   // Status change listeners
   private readonly _statusListeners = new Set<StatusChangeCallback>();
+  private readonly _failoverListeners = new Set<FailoverCallback>();
   private _allProvidersDown = false;
 
   // Manager-level diagnostics
@@ -195,6 +214,23 @@ export class AISProviderManager {
     return () => {
       this._statusListeners.delete(cb);
     };
+  }
+
+  /**
+   * Registers a callback that fires when the manager fails over from one
+   * provider to another. Used by the storage subsystem to record provider
+   * state transitions. Returns an unsubscribe function.
+   */
+  onFailover(cb: FailoverCallback): Unsubscribe {
+    this._failoverListeners.add(cb);
+    return () => {
+      this._failoverListeners.delete(cb);
+    };
+  }
+
+  /** Returns the name of the currently active provider, or 'none' if none configured. */
+  getActiveProviderName(): string {
+    return this.providers[this.activeIndex]?.name ?? 'none';
   }
 
   /** Returns true if all providers are currently in error or stopped state. */
@@ -334,6 +370,21 @@ export class AISProviderManager {
       cooldown_ms: cooldownMs,
       wrapped_around: wrappedAround,
     });
+
+    const failoverEvent: FailoverEvent = {
+      from: prevName,
+      to: nextName,
+      reason: 'silence_timeout',
+      timestamp: this._lastFailoverAt,
+      failoverCount: this._failoverCount,
+    };
+    for (const cb of this._failoverListeners) {
+      try {
+        cb(failoverEvent);
+      } catch (err) {
+        log('error', 'failover_listener_threw', { error: String(err) });
+      }
+    }
 
     this._stopProvider(prevIndex);
     this._checkProviderHealth();

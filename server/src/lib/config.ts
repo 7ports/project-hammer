@@ -68,6 +68,17 @@ interface Config {
    * Defaults to 30 000 ms (30 seconds).
    */
   ferryStatusPollMs: number;
+  /**
+   * Path to the SQLite database file used by the storage subsystem.
+   * Defaults to `/data/hammer.db` in production (Fly volume mount) and
+   * `./data/hammer.db` in development.
+   */
+  storageDbPath: string;
+  /**
+   * Anthropic API key. When unset, the LLM endpoints return 503 "LLM
+   * disabled" instead of crashing — the rest of the server runs normally.
+   */
+  anthropicApiKey: string | null;
 }
 
 export const config: Config = {
@@ -83,4 +94,9 @@ export const config: Config = {
   aisSilenceTimeoutMs: optionalEnvNumber('AIS_SILENCE_TIMEOUT_MS', 5 * 60 * 1_000),
   aisPollingIntervalMs: optionalEnvNumber('AIS_POLLING_INTERVAL_MS', 30_000),
   ferryStatusPollMs: optionalEnvNumber('FERRY_STATUS_POLL_MS', 30_000),
+  storageDbPath: optionalEnv(
+    'STORAGE_DB_PATH',
+    process.env['NODE_ENV'] === 'production' ? '/data/hammer.db' : './data/hammer.db',
+  ),
+  anthropicApiKey: process.env['ANTHROPIC_API_KEY'] ?? null,
 };

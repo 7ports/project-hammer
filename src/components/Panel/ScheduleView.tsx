@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSchedule } from '../../hooks/useSchedule';
+import { useScheduleScrub, type UseScheduleScrubResult } from '../../hooks/useScheduleScrub';
 import { useServiceStatus } from '../../hooks/useServiceStatus';
 import type { RouteId } from '../../types/schedule';
 import type { ServiceState } from '../../types/serviceStatus';
@@ -101,7 +102,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         <div className="schedule-route__header">
           <span className="schedule-route__name">{label}</span>
         </div>
-        <div className="schedule-route__skeleton" aria-label="Loading schedule..." />
+        <div className="schedule-route__skeleton" role="status" aria-live="polite" aria-label="Loading schedule..." />
         <div className="schedule-route__skeleton schedule-route__skeleton--sm" />
         <div className="schedule-route__skeleton schedule-route__skeleton--sm" />
       </div>
@@ -163,7 +164,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
         </p>
       ) : effectiveState === 'operating' || effectiveState === 'unknown' || effectiveState === 'disrupted' ? (
         <>
-          <div className="schedule-route__departures" aria-label={`Upcoming departures for ${label}`}>
+          <div className="schedule-route__departures" role="group" aria-label={`Upcoming departures for ${label}`}>
             {departuresToShow.length === 0 ? (
               <p className="schedule-route__notice">No more departures today</p>
             ) : (
@@ -199,6 +200,7 @@ function RouteRow({ routeId, label }: RouteRowProps) {
           {effectiveState !== 'disrupted' && routeInSeason && (
             <div
               className="schedule-route__arrival"
+              role="group"
               aria-label={`Next arrival at Jack Layton for ${label}`}
             >
               <span className="schedule-route__arrival-label">↓ Next arrival</span>
@@ -222,7 +224,8 @@ function RouteRow({ routeId, label }: RouteRowProps) {
 }
 
 export function ScheduleView() {
-  const { activeSeason, loading } = useSchedule();
+  const { activeSeason, loading, schedule } = useSchedule();
+  const scrub = useScheduleScrub(schedule, []);
 
   const seasonBadge = !loading && activeSeason ? (
     <div className="schedule-view__season">
@@ -237,9 +240,48 @@ export function ScheduleView() {
     <section className="schedule-view" aria-label="Ferry departure schedule">
       <h3 className="schedule-view__title">Departures</h3>
       {seasonBadge}
+      <ScheduleScrubBar scrub={scrub} />
       {ROUTE_DISPLAY.map(({ id, label }) => (
         <RouteRow key={id} routeId={id} label={label} />
       ))}
     </section>
+  );
+}
+
+interface ScheduleScrubBarProps {
+  scrub: UseScheduleScrubResult;
+}
+
+function ScheduleScrubBar({ scrub }: ScheduleScrubBarProps) {
+  const offsetLabel = scrub.isLive
+    ? 'Live'
+    : `Preview ${scrub.scrubOffsetMin > 0 ? '+' : ''}${scrub.scrubOffsetMin}m`;
+  return (
+    <div className="schedule-scrub" role="group" aria-label="Schedule timeline scrubber">
+      <label htmlFor="schedule-scrub-slider" className="schedule-scrub__label">
+        {offsetLabel}
+      </label>
+      <input
+        id="schedule-scrub-slider"
+        type="range"
+        min={-60}
+        max={60}
+        step={5}
+        value={scrub.scrubOffsetMin}
+        onChange={(e) => scrub.setScrubOffsetMin(Number(e.target.value))}
+        aria-label="Scrub schedule timeline"
+        className="schedule-scrub__slider"
+      />
+      {!scrub.isLive && (
+        <button
+          type="button"
+          onClick={scrub.reset}
+          className="schedule-scrub__reset"
+          aria-label="Reset schedule scrubber to live"
+        >
+          Reset
+        </button>
+      )}
+    </div>
   );
 }
