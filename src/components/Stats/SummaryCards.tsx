@@ -49,38 +49,38 @@ export function SummaryCards({ range }: Props) {
   return (
     <section className="stats-widget" aria-labelledby="summary-h">
       <h2 id="summary-h" className="stats-widget__heading">Headline metrics</h2>
-      <div className="summary-grid" role="list">
-        <article className="summary-card" role="listitem">
+      <ul className="summary-grid">
+        <li className="summary-card">
           <span className="summary-card__label">Trips</span>
           <span className="summary-card__value">{fmtNumber(s.tripsCount)}</span>
           <span className="summary-card__sub">last {data.range.days ?? '?'}d</span>
-        </article>
-        <article className="summary-card" role="listitem">
+        </li>
+        <li className="summary-card">
           <span className="summary-card__label">On-time</span>
           <span className="summary-card__value">{fmtPct(s.onTimeRate)}</span>
           <span className="summary-card__sub">±3 min of schedule</span>
-        </article>
-        <article className="summary-card" role="listitem">
+        </li>
+        <li className="summary-card">
           <span className="summary-card__label">Median trip</span>
           <span className="summary-card__value">{fmtMinutes(s.medianTripSec)}</span>
           <span className="summary-card__sub">dock to dock</span>
-        </article>
-        <article className="summary-card" role="listitem">
+        </li>
+        <li className="summary-card">
           <span className="summary-card__label">Avg SOG</span>
           <span className="summary-card__value">{s.avgSogKn !== null ? `${s.avgSogKn.toFixed(1)} kn` : '—'}</span>
           <span className="summary-card__sub">fleet underway</span>
-        </article>
-        <article className="summary-card" role="listitem">
+        </li>
+        <li className="summary-card">
           <span className="summary-card__label">Vessels active</span>
           <span className="summary-card__value">{fmtNumber(s.vesselsOnDuty)}</span>
           <span className="summary-card__sub">distinct MMSIs</span>
-        </article>
-        <article className="summary-card" role="listitem">
+        </li>
+        <li className="summary-card">
           <span className="summary-card__label">Service uptime</span>
           <span className="summary-card__value">{fmtPct(s.serviceUptimePct)}</span>
           <span className="summary-card__sub">{s.alertsCount} alert{s.alertsCount === 1 ? '' : 's'}</span>
-        </article>
-      </div>
+        </li>
+      </ul>
     </section>
   );
 }

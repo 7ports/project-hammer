@@ -119,10 +119,20 @@ describe('a11y — PanelShell mobile bottom-sheet', () => {
 
 describe('a11y — StatsPage', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => SUMMARY_FIXTURE,
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      // Return per-resource shapes so each Stats widget renders its empty/no-data branch
+      // without crashing on `.length` / `.map` of undefined.
+      const generatedAt = '2026-06-01T00:00:00Z';
+      const range = { key: '7d', days: 7, fromMs: 0, toMs: 1 };
+      let data: unknown = {};
+      if (url.includes('/api/analytics/summary')) return { ok: true, status: 200, json: async () => SUMMARY_FIXTURE } as Response;
+      if (url.includes('/api/analytics/trips')) data = { range, granularity: 'day', series: [], tripsCount: 0, trips: [] };
+      else if (url.includes('/api/analytics/utilization')) data = { range, vessels: [] };
+      else if (url.includes('/api/analytics/dwell')) data = { range, stats: [] };
+      else if (url.includes('/api/analytics/disruptions')) data = { range, events: [], count: 0 };
+      else if (url.includes('/api/analytics/data-quality')) data = { range, totalPositions: 0, longestGapMs: null, gapCount: 0, providerTransitions: [], uptimePct: null };
+      return { ok: true, status: 200, json: async () => ({ data, generatedAt, cached: false }) } as Response;
     }));
   });
 
