@@ -70,6 +70,8 @@ export interface ServiceStatusResult extends ServiceStatus {
   outageReason: string | null;
   /** When the City posted the status (ISO string) */
   outagePostedAt: string | null;
+  /** Altered-schedule departure times parsed from the current disruption (HH:MM 24h). */
+  outageParsedTimes: string[];
   /** Recent status history, newest first */
   outageHistory: Omit<FerryStatusEvent, 'history'>[];
 }
@@ -113,6 +115,7 @@ export function useServiceStatus(): ServiceStatusResult {
     outageMessage: ferryData?.status !== 'open' ? (ferryData?.message ?? null) : null,
     outageReason: ferryData?.status !== 'open' ? (ferryData?.reason ?? null) : null,
     outagePostedAt: ferryData?.status !== 'open' ? (ferryData?.postedAt ?? null) : null,
+    outageParsedTimes: ferryData?.status !== 'open' ? (ferryData?.parsedTimes ?? []) : [],
     outageHistory: history.map((e) => ({
       status: e.status,
       reason: e.reason,

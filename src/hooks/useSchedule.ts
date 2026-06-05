@@ -8,6 +8,17 @@ export interface UseScheduleResult {
   loading: boolean;
   error: string | null;
   upcomingDepartures: (routeId: RouteId, direction: 'outbound' | 'inbound', count: number) => Departure[];
+  /**
+   * Return Date objects (today, local time) for departures that fall within
+   * [now - windowBeforeMin, now + windowAfterMin]. Used by destination inference
+   * to pick the nearest scheduled departure for each candidate route.
+   */
+  departuresInWindow: (
+    routeId: RouteId,
+    direction: 'outbound' | 'inbound',
+    windowBeforeMin: number,
+    windowAfterMin: number,
+  ) => Date[];
 }
 
 const DAY_NAMES: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -39,6 +50,38 @@ function findActiveSeason(schedule: ScheduleData, today: string): ScheduleSeason
     .sort((a, b) => (a.effectiveFrom > b.effectiveFrom ? -1 : 1));
 
   return past[0] ?? schedule.seasons[0];
+}
+
+function getDeparturesInWindow(
+  activeSeason: ScheduleSeason | null,
+  routeId: RouteId,
+  direction: 'outbound' | 'inbound',
+  windowBeforeMin: number,
+  windowAfterMin: number,
+): Date[] {
+  if (!activeSeason) return [];
+  const today = new Date().toISOString().slice(0, 10);
+  const route = activeSeason.routes.find(r => r.routeId === routeId);
+  if (!route || !isRouteActive(route, today)) return [];
+
+  const now = new Date();
+  const todayDay = DAY_NAMES[now.getDay()];
+  const nowMs = now.getTime();
+  const lowerMs = nowMs - windowBeforeMin * 60_000;
+  const upperMs = nowMs + windowAfterMin * 60_000;
+
+  const out: Date[] = [];
+  for (const d of route.departures) {
+    if (d.direction !== direction) continue;
+    if (!d.days.includes(todayDay)) continue;
+    if (d.peakOnly) continue;
+    const [h, m] = d.time.split(':').map(Number);
+    const dep = new Date(now);
+    dep.setHours(h, m, 0, 0);
+    const t = dep.getTime();
+    if (t >= lowerMs && t <= upperMs) out.push(dep);
+  }
+  return out;
 }
 
 function getUpcoming(
@@ -122,5 +165,17 @@ export function useSchedule(): UseScheduleResult {
     [activeSeason],
   );
 
-  return { schedule, activeSeason, routes, loading, error, upcomingDepartures };
+  const departuresInWindow = useMemo(
+    () =>
+      (
+        routeId: RouteId,
+        direction: 'outbound' | 'inbound',
+        windowBeforeMin: number,
+        windowAfterMin: number,
+      ) =>
+        getDeparturesInWindow(activeSeason, routeId, direction, windowBeforeMin, windowAfterMin),
+    [activeSeason],
+  );
+
+  return { schedule, activeSeason, routes, loading, error, upcomingDepartures, departuresInWindow };
 }
